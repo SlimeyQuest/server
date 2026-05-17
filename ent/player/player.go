@@ -29,6 +29,22 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// FieldLastLoginAt holds the string denoting the last_login_at field in the database.
 	FieldLastLoginAt = "last_login_at"
+	// FieldGold holds the string denoting the gold field in the database.
+	FieldGold = "gold"
+	// FieldGems holds the string denoting the gems field in the database.
+	FieldGems = "gems"
+	// FieldAdventureID holds the string denoting the adventure_id field in the database.
+	FieldAdventureID = "adventure_id"
+	// FieldStageIndex holds the string denoting the stage_index field in the database.
+	FieldStageIndex = "stage_index"
+	// FieldHighestStageCleared holds the string denoting the highest_stage_cleared field in the database.
+	FieldHighestStageCleared = "highest_stage_cleared"
+	// FieldLastClaimAt holds the string denoting the last_claim_at field in the database.
+	FieldLastClaimAt = "last_claim_at"
+	// FieldEquipmentJSON holds the string denoting the equipment_json field in the database.
+	FieldEquipmentJSON = "equipment_json"
+	// FieldClearedMilestones holds the string denoting the cleared_milestones field in the database.
+	FieldClearedMilestones = "cleared_milestones"
 	// Table holds the table name of the player in the database.
 	Table = "players"
 )
@@ -44,6 +60,14 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldUpdatedAt,
 	FieldLastLoginAt,
+	FieldGold,
+	FieldGems,
+	FieldAdventureID,
+	FieldStageIndex,
+	FieldHighestStageCleared,
+	FieldLastClaimAt,
+	FieldEquipmentJSON,
+	FieldClearedMilestones,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -73,6 +97,20 @@ var (
 	DefaultUpdatedAt func() time.Time
 	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
 	UpdateDefaultUpdatedAt func() time.Time
+	// DefaultGold holds the default value on creation for the "gold" field.
+	DefaultGold int64
+	// DefaultGems holds the default value on creation for the "gems" field.
+	DefaultGems int64
+	// DefaultAdventureID holds the default value on creation for the "adventure_id" field.
+	DefaultAdventureID int32
+	// DefaultStageIndex holds the default value on creation for the "stage_index" field.
+	DefaultStageIndex int32
+	// DefaultHighestStageCleared holds the default value on creation for the "highest_stage_cleared" field.
+	DefaultHighestStageCleared int32
+	// DefaultEquipmentJSON holds the default value on creation for the "equipment_json" field.
+	DefaultEquipmentJSON map[string]interface{}
+	// DefaultClearedMilestones holds the default value on creation for the "cleared_milestones" field.
+	DefaultClearedMilestones []int32
 )
 
 // OrderOption defines the ordering options for the Player queries.
@@ -121,4 +159,34 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByLastLoginAt orders the results by the last_login_at field.
 func ByLastLoginAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLastLoginAt, opts...).ToFunc()
+}
+
+// ByGold orders the results by the gold field.
+func ByGold(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldGold, opts...).ToFunc()
+}
+
+// ByGems orders the results by the gems field.
+func ByGems(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldGems, opts...).ToFunc()
+}
+
+// ByAdventureID orders the results by the adventure_id field.
+func ByAdventureID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAdventureID, opts...).ToFunc()
+}
+
+// ByStageIndex orders the results by the stage_index field.
+func ByStageIndex(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldStageIndex, opts...).ToFunc()
+}
+
+// ByHighestStageCleared orders the results by the highest_stage_cleared field.
+func ByHighestStageCleared(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldHighestStageCleared, opts...).ToFunc()
+}
+
+// ByLastClaimAt orders the results by the last_claim_at field.
+func ByLastClaimAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastClaimAt, opts...).ToFunc()
 }

@@ -94,6 +94,36 @@ func LastLoginAt(v time.Time) predicate.Player {
 	return predicate.Player(sql.FieldEQ(FieldLastLoginAt, v))
 }
 
+// Gold applies equality check predicate on the "gold" field. It's identical to GoldEQ.
+func Gold(v int64) predicate.Player {
+	return predicate.Player(sql.FieldEQ(FieldGold, v))
+}
+
+// Gems applies equality check predicate on the "gems" field. It's identical to GemsEQ.
+func Gems(v int64) predicate.Player {
+	return predicate.Player(sql.FieldEQ(FieldGems, v))
+}
+
+// AdventureID applies equality check predicate on the "adventure_id" field. It's identical to AdventureIDEQ.
+func AdventureID(v int32) predicate.Player {
+	return predicate.Player(sql.FieldEQ(FieldAdventureID, v))
+}
+
+// StageIndex applies equality check predicate on the "stage_index" field. It's identical to StageIndexEQ.
+func StageIndex(v int32) predicate.Player {
+	return predicate.Player(sql.FieldEQ(FieldStageIndex, v))
+}
+
+// HighestStageCleared applies equality check predicate on the "highest_stage_cleared" field. It's identical to HighestStageClearedEQ.
+func HighestStageCleared(v int32) predicate.Player {
+	return predicate.Player(sql.FieldEQ(FieldHighestStageCleared, v))
+}
+
+// LastClaimAt applies equality check predicate on the "last_claim_at" field. It's identical to LastClaimAtEQ.
+func LastClaimAt(v time.Time) predicate.Player {
+	return predicate.Player(sql.FieldEQ(FieldLastClaimAt, v))
+}
+
 // PlatformEQ applies the EQ predicate on the "platform" field.
 func PlatformEQ(v string) predicate.Player {
 	return predicate.Player(sql.FieldEQ(FieldPlatform, v))
@@ -497,6 +527,256 @@ func LastLoginAtIsNil() predicate.Player {
 // LastLoginAtNotNil applies the NotNil predicate on the "last_login_at" field.
 func LastLoginAtNotNil() predicate.Player {
 	return predicate.Player(sql.FieldNotNull(FieldLastLoginAt))
+}
+
+// GoldEQ applies the EQ predicate on the "gold" field.
+func GoldEQ(v int64) predicate.Player {
+	return predicate.Player(sql.FieldEQ(FieldGold, v))
+}
+
+// GoldNEQ applies the NEQ predicate on the "gold" field.
+func GoldNEQ(v int64) predicate.Player {
+	return predicate.Player(sql.FieldNEQ(FieldGold, v))
+}
+
+// GoldIn applies the In predicate on the "gold" field.
+func GoldIn(vs ...int64) predicate.Player {
+	return predicate.Player(sql.FieldIn(FieldGold, vs...))
+}
+
+// GoldNotIn applies the NotIn predicate on the "gold" field.
+func GoldNotIn(vs ...int64) predicate.Player {
+	return predicate.Player(sql.FieldNotIn(FieldGold, vs...))
+}
+
+// GoldGT applies the GT predicate on the "gold" field.
+func GoldGT(v int64) predicate.Player {
+	return predicate.Player(sql.FieldGT(FieldGold, v))
+}
+
+// GoldGTE applies the GTE predicate on the "gold" field.
+func GoldGTE(v int64) predicate.Player {
+	return predicate.Player(sql.FieldGTE(FieldGold, v))
+}
+
+// GoldLT applies the LT predicate on the "gold" field.
+func GoldLT(v int64) predicate.Player {
+	return predicate.Player(sql.FieldLT(FieldGold, v))
+}
+
+// GoldLTE applies the LTE predicate on the "gold" field.
+func GoldLTE(v int64) predicate.Player {
+	return predicate.Player(sql.FieldLTE(FieldGold, v))
+}
+
+// GemsEQ applies the EQ predicate on the "gems" field.
+func GemsEQ(v int64) predicate.Player {
+	return predicate.Player(sql.FieldEQ(FieldGems, v))
+}
+
+// GemsNEQ applies the NEQ predicate on the "gems" field.
+func GemsNEQ(v int64) predicate.Player {
+	return predicate.Player(sql.FieldNEQ(FieldGems, v))
+}
+
+// GemsIn applies the In predicate on the "gems" field.
+func GemsIn(vs ...int64) predicate.Player {
+	return predicate.Player(sql.FieldIn(FieldGems, vs...))
+}
+
+// GemsNotIn applies the NotIn predicate on the "gems" field.
+func GemsNotIn(vs ...int64) predicate.Player {
+	return predicate.Player(sql.FieldNotIn(FieldGems, vs...))
+}
+
+// GemsGT applies the GT predicate on the "gems" field.
+func GemsGT(v int64) predicate.Player {
+	return predicate.Player(sql.FieldGT(FieldGems, v))
+}
+
+// GemsGTE applies the GTE predicate on the "gems" field.
+func GemsGTE(v int64) predicate.Player {
+	return predicate.Player(sql.FieldGTE(FieldGems, v))
+}
+
+// GemsLT applies the LT predicate on the "gems" field.
+func GemsLT(v int64) predicate.Player {
+	return predicate.Player(sql.FieldLT(FieldGems, v))
+}
+
+// GemsLTE applies the LTE predicate on the "gems" field.
+func GemsLTE(v int64) predicate.Player {
+	return predicate.Player(sql.FieldLTE(FieldGems, v))
+}
+
+// AdventureIDEQ applies the EQ predicate on the "adventure_id" field.
+func AdventureIDEQ(v int32) predicate.Player {
+	return predicate.Player(sql.FieldEQ(FieldAdventureID, v))
+}
+
+// AdventureIDNEQ applies the NEQ predicate on the "adventure_id" field.
+func AdventureIDNEQ(v int32) predicate.Player {
+	return predicate.Player(sql.FieldNEQ(FieldAdventureID, v))
+}
+
+// AdventureIDIn applies the In predicate on the "adventure_id" field.
+func AdventureIDIn(vs ...int32) predicate.Player {
+	return predicate.Player(sql.FieldIn(FieldAdventureID, vs...))
+}
+
+// AdventureIDNotIn applies the NotIn predicate on the "adventure_id" field.
+func AdventureIDNotIn(vs ...int32) predicate.Player {
+	return predicate.Player(sql.FieldNotIn(FieldAdventureID, vs...))
+}
+
+// AdventureIDGT applies the GT predicate on the "adventure_id" field.
+func AdventureIDGT(v int32) predicate.Player {
+	return predicate.Player(sql.FieldGT(FieldAdventureID, v))
+}
+
+// AdventureIDGTE applies the GTE predicate on the "adventure_id" field.
+func AdventureIDGTE(v int32) predicate.Player {
+	return predicate.Player(sql.FieldGTE(FieldAdventureID, v))
+}
+
+// AdventureIDLT applies the LT predicate on the "adventure_id" field.
+func AdventureIDLT(v int32) predicate.Player {
+	return predicate.Player(sql.FieldLT(FieldAdventureID, v))
+}
+
+// AdventureIDLTE applies the LTE predicate on the "adventure_id" field.
+func AdventureIDLTE(v int32) predicate.Player {
+	return predicate.Player(sql.FieldLTE(FieldAdventureID, v))
+}
+
+// StageIndexEQ applies the EQ predicate on the "stage_index" field.
+func StageIndexEQ(v int32) predicate.Player {
+	return predicate.Player(sql.FieldEQ(FieldStageIndex, v))
+}
+
+// StageIndexNEQ applies the NEQ predicate on the "stage_index" field.
+func StageIndexNEQ(v int32) predicate.Player {
+	return predicate.Player(sql.FieldNEQ(FieldStageIndex, v))
+}
+
+// StageIndexIn applies the In predicate on the "stage_index" field.
+func StageIndexIn(vs ...int32) predicate.Player {
+	return predicate.Player(sql.FieldIn(FieldStageIndex, vs...))
+}
+
+// StageIndexNotIn applies the NotIn predicate on the "stage_index" field.
+func StageIndexNotIn(vs ...int32) predicate.Player {
+	return predicate.Player(sql.FieldNotIn(FieldStageIndex, vs...))
+}
+
+// StageIndexGT applies the GT predicate on the "stage_index" field.
+func StageIndexGT(v int32) predicate.Player {
+	return predicate.Player(sql.FieldGT(FieldStageIndex, v))
+}
+
+// StageIndexGTE applies the GTE predicate on the "stage_index" field.
+func StageIndexGTE(v int32) predicate.Player {
+	return predicate.Player(sql.FieldGTE(FieldStageIndex, v))
+}
+
+// StageIndexLT applies the LT predicate on the "stage_index" field.
+func StageIndexLT(v int32) predicate.Player {
+	return predicate.Player(sql.FieldLT(FieldStageIndex, v))
+}
+
+// StageIndexLTE applies the LTE predicate on the "stage_index" field.
+func StageIndexLTE(v int32) predicate.Player {
+	return predicate.Player(sql.FieldLTE(FieldStageIndex, v))
+}
+
+// HighestStageClearedEQ applies the EQ predicate on the "highest_stage_cleared" field.
+func HighestStageClearedEQ(v int32) predicate.Player {
+	return predicate.Player(sql.FieldEQ(FieldHighestStageCleared, v))
+}
+
+// HighestStageClearedNEQ applies the NEQ predicate on the "highest_stage_cleared" field.
+func HighestStageClearedNEQ(v int32) predicate.Player {
+	return predicate.Player(sql.FieldNEQ(FieldHighestStageCleared, v))
+}
+
+// HighestStageClearedIn applies the In predicate on the "highest_stage_cleared" field.
+func HighestStageClearedIn(vs ...int32) predicate.Player {
+	return predicate.Player(sql.FieldIn(FieldHighestStageCleared, vs...))
+}
+
+// HighestStageClearedNotIn applies the NotIn predicate on the "highest_stage_cleared" field.
+func HighestStageClearedNotIn(vs ...int32) predicate.Player {
+	return predicate.Player(sql.FieldNotIn(FieldHighestStageCleared, vs...))
+}
+
+// HighestStageClearedGT applies the GT predicate on the "highest_stage_cleared" field.
+func HighestStageClearedGT(v int32) predicate.Player {
+	return predicate.Player(sql.FieldGT(FieldHighestStageCleared, v))
+}
+
+// HighestStageClearedGTE applies the GTE predicate on the "highest_stage_cleared" field.
+func HighestStageClearedGTE(v int32) predicate.Player {
+	return predicate.Player(sql.FieldGTE(FieldHighestStageCleared, v))
+}
+
+// HighestStageClearedLT applies the LT predicate on the "highest_stage_cleared" field.
+func HighestStageClearedLT(v int32) predicate.Player {
+	return predicate.Player(sql.FieldLT(FieldHighestStageCleared, v))
+}
+
+// HighestStageClearedLTE applies the LTE predicate on the "highest_stage_cleared" field.
+func HighestStageClearedLTE(v int32) predicate.Player {
+	return predicate.Player(sql.FieldLTE(FieldHighestStageCleared, v))
+}
+
+// LastClaimAtEQ applies the EQ predicate on the "last_claim_at" field.
+func LastClaimAtEQ(v time.Time) predicate.Player {
+	return predicate.Player(sql.FieldEQ(FieldLastClaimAt, v))
+}
+
+// LastClaimAtNEQ applies the NEQ predicate on the "last_claim_at" field.
+func LastClaimAtNEQ(v time.Time) predicate.Player {
+	return predicate.Player(sql.FieldNEQ(FieldLastClaimAt, v))
+}
+
+// LastClaimAtIn applies the In predicate on the "last_claim_at" field.
+func LastClaimAtIn(vs ...time.Time) predicate.Player {
+	return predicate.Player(sql.FieldIn(FieldLastClaimAt, vs...))
+}
+
+// LastClaimAtNotIn applies the NotIn predicate on the "last_claim_at" field.
+func LastClaimAtNotIn(vs ...time.Time) predicate.Player {
+	return predicate.Player(sql.FieldNotIn(FieldLastClaimAt, vs...))
+}
+
+// LastClaimAtGT applies the GT predicate on the "last_claim_at" field.
+func LastClaimAtGT(v time.Time) predicate.Player {
+	return predicate.Player(sql.FieldGT(FieldLastClaimAt, v))
+}
+
+// LastClaimAtGTE applies the GTE predicate on the "last_claim_at" field.
+func LastClaimAtGTE(v time.Time) predicate.Player {
+	return predicate.Player(sql.FieldGTE(FieldLastClaimAt, v))
+}
+
+// LastClaimAtLT applies the LT predicate on the "last_claim_at" field.
+func LastClaimAtLT(v time.Time) predicate.Player {
+	return predicate.Player(sql.FieldLT(FieldLastClaimAt, v))
+}
+
+// LastClaimAtLTE applies the LTE predicate on the "last_claim_at" field.
+func LastClaimAtLTE(v time.Time) predicate.Player {
+	return predicate.Player(sql.FieldLTE(FieldLastClaimAt, v))
+}
+
+// LastClaimAtIsNil applies the IsNil predicate on the "last_claim_at" field.
+func LastClaimAtIsNil() predicate.Player {
+	return predicate.Player(sql.FieldIsNull(FieldLastClaimAt))
+}
+
+// LastClaimAtNotNil applies the NotNil predicate on the "last_claim_at" field.
+func LastClaimAtNotNil() predicate.Player {
+	return predicate.Player(sql.FieldNotNull(FieldLastClaimAt))
 }
 
 // And groups predicates with the AND operator between them.

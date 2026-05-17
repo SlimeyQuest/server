@@ -30,23 +30,37 @@ const (
 // PlayerMutation represents an operation that mutates the Player nodes in the graph.
 type PlayerMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *int
-	platform      *string
-	external_id   *string
-	nickname      *string
-	level         *int32
-	addlevel      *int32
-	exp           *int64
-	addexp        *int64
-	created_at    *time.Time
-	updated_at    *time.Time
-	last_login_at *time.Time
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*Player, error)
-	predicates    []predicate.Player
+	op                       Op
+	typ                      string
+	id                       *int
+	platform                 *string
+	external_id              *string
+	nickname                 *string
+	level                    *int32
+	addlevel                 *int32
+	exp                      *int64
+	addexp                   *int64
+	created_at               *time.Time
+	updated_at               *time.Time
+	last_login_at            *time.Time
+	gold                     *int64
+	addgold                  *int64
+	gems                     *int64
+	addgems                  *int64
+	adventure_id             *int32
+	addadventure_id          *int32
+	stage_index              *int32
+	addstage_index           *int32
+	highest_stage_cleared    *int32
+	addhighest_stage_cleared *int32
+	last_claim_at            *time.Time
+	equipment_json           *map[string]interface{}
+	cleared_milestones       *[]int32
+	appendcleared_milestones []int32
+	clearedFields            map[string]struct{}
+	done                     bool
+	oldValue                 func(context.Context) (*Player, error)
+	predicates               []predicate.Player
 }
 
 var _ ent.Mutation = (*PlayerMutation)(nil)
@@ -488,6 +502,422 @@ func (m *PlayerMutation) ResetLastLoginAt() {
 	delete(m.clearedFields, player.FieldLastLoginAt)
 }
 
+// SetGold sets the "gold" field.
+func (m *PlayerMutation) SetGold(i int64) {
+	m.gold = &i
+	m.addgold = nil
+}
+
+// Gold returns the value of the "gold" field in the mutation.
+func (m *PlayerMutation) Gold() (r int64, exists bool) {
+	v := m.gold
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGold returns the old "gold" field's value of the Player entity.
+// If the Player object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PlayerMutation) OldGold(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGold is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGold requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGold: %w", err)
+	}
+	return oldValue.Gold, nil
+}
+
+// AddGold adds i to the "gold" field.
+func (m *PlayerMutation) AddGold(i int64) {
+	if m.addgold != nil {
+		*m.addgold += i
+	} else {
+		m.addgold = &i
+	}
+}
+
+// AddedGold returns the value that was added to the "gold" field in this mutation.
+func (m *PlayerMutation) AddedGold() (r int64, exists bool) {
+	v := m.addgold
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetGold resets all changes to the "gold" field.
+func (m *PlayerMutation) ResetGold() {
+	m.gold = nil
+	m.addgold = nil
+}
+
+// SetGems sets the "gems" field.
+func (m *PlayerMutation) SetGems(i int64) {
+	m.gems = &i
+	m.addgems = nil
+}
+
+// Gems returns the value of the "gems" field in the mutation.
+func (m *PlayerMutation) Gems() (r int64, exists bool) {
+	v := m.gems
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGems returns the old "gems" field's value of the Player entity.
+// If the Player object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PlayerMutation) OldGems(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGems is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGems requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGems: %w", err)
+	}
+	return oldValue.Gems, nil
+}
+
+// AddGems adds i to the "gems" field.
+func (m *PlayerMutation) AddGems(i int64) {
+	if m.addgems != nil {
+		*m.addgems += i
+	} else {
+		m.addgems = &i
+	}
+}
+
+// AddedGems returns the value that was added to the "gems" field in this mutation.
+func (m *PlayerMutation) AddedGems() (r int64, exists bool) {
+	v := m.addgems
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetGems resets all changes to the "gems" field.
+func (m *PlayerMutation) ResetGems() {
+	m.gems = nil
+	m.addgems = nil
+}
+
+// SetAdventureID sets the "adventure_id" field.
+func (m *PlayerMutation) SetAdventureID(i int32) {
+	m.adventure_id = &i
+	m.addadventure_id = nil
+}
+
+// AdventureID returns the value of the "adventure_id" field in the mutation.
+func (m *PlayerMutation) AdventureID() (r int32, exists bool) {
+	v := m.adventure_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAdventureID returns the old "adventure_id" field's value of the Player entity.
+// If the Player object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PlayerMutation) OldAdventureID(ctx context.Context) (v int32, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAdventureID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAdventureID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAdventureID: %w", err)
+	}
+	return oldValue.AdventureID, nil
+}
+
+// AddAdventureID adds i to the "adventure_id" field.
+func (m *PlayerMutation) AddAdventureID(i int32) {
+	if m.addadventure_id != nil {
+		*m.addadventure_id += i
+	} else {
+		m.addadventure_id = &i
+	}
+}
+
+// AddedAdventureID returns the value that was added to the "adventure_id" field in this mutation.
+func (m *PlayerMutation) AddedAdventureID() (r int32, exists bool) {
+	v := m.addadventure_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetAdventureID resets all changes to the "adventure_id" field.
+func (m *PlayerMutation) ResetAdventureID() {
+	m.adventure_id = nil
+	m.addadventure_id = nil
+}
+
+// SetStageIndex sets the "stage_index" field.
+func (m *PlayerMutation) SetStageIndex(i int32) {
+	m.stage_index = &i
+	m.addstage_index = nil
+}
+
+// StageIndex returns the value of the "stage_index" field in the mutation.
+func (m *PlayerMutation) StageIndex() (r int32, exists bool) {
+	v := m.stage_index
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStageIndex returns the old "stage_index" field's value of the Player entity.
+// If the Player object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PlayerMutation) OldStageIndex(ctx context.Context) (v int32, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStageIndex is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStageIndex requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStageIndex: %w", err)
+	}
+	return oldValue.StageIndex, nil
+}
+
+// AddStageIndex adds i to the "stage_index" field.
+func (m *PlayerMutation) AddStageIndex(i int32) {
+	if m.addstage_index != nil {
+		*m.addstage_index += i
+	} else {
+		m.addstage_index = &i
+	}
+}
+
+// AddedStageIndex returns the value that was added to the "stage_index" field in this mutation.
+func (m *PlayerMutation) AddedStageIndex() (r int32, exists bool) {
+	v := m.addstage_index
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetStageIndex resets all changes to the "stage_index" field.
+func (m *PlayerMutation) ResetStageIndex() {
+	m.stage_index = nil
+	m.addstage_index = nil
+}
+
+// SetHighestStageCleared sets the "highest_stage_cleared" field.
+func (m *PlayerMutation) SetHighestStageCleared(i int32) {
+	m.highest_stage_cleared = &i
+	m.addhighest_stage_cleared = nil
+}
+
+// HighestStageCleared returns the value of the "highest_stage_cleared" field in the mutation.
+func (m *PlayerMutation) HighestStageCleared() (r int32, exists bool) {
+	v := m.highest_stage_cleared
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHighestStageCleared returns the old "highest_stage_cleared" field's value of the Player entity.
+// If the Player object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PlayerMutation) OldHighestStageCleared(ctx context.Context) (v int32, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHighestStageCleared is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHighestStageCleared requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHighestStageCleared: %w", err)
+	}
+	return oldValue.HighestStageCleared, nil
+}
+
+// AddHighestStageCleared adds i to the "highest_stage_cleared" field.
+func (m *PlayerMutation) AddHighestStageCleared(i int32) {
+	if m.addhighest_stage_cleared != nil {
+		*m.addhighest_stage_cleared += i
+	} else {
+		m.addhighest_stage_cleared = &i
+	}
+}
+
+// AddedHighestStageCleared returns the value that was added to the "highest_stage_cleared" field in this mutation.
+func (m *PlayerMutation) AddedHighestStageCleared() (r int32, exists bool) {
+	v := m.addhighest_stage_cleared
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetHighestStageCleared resets all changes to the "highest_stage_cleared" field.
+func (m *PlayerMutation) ResetHighestStageCleared() {
+	m.highest_stage_cleared = nil
+	m.addhighest_stage_cleared = nil
+}
+
+// SetLastClaimAt sets the "last_claim_at" field.
+func (m *PlayerMutation) SetLastClaimAt(t time.Time) {
+	m.last_claim_at = &t
+}
+
+// LastClaimAt returns the value of the "last_claim_at" field in the mutation.
+func (m *PlayerMutation) LastClaimAt() (r time.Time, exists bool) {
+	v := m.last_claim_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastClaimAt returns the old "last_claim_at" field's value of the Player entity.
+// If the Player object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PlayerMutation) OldLastClaimAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastClaimAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastClaimAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastClaimAt: %w", err)
+	}
+	return oldValue.LastClaimAt, nil
+}
+
+// ClearLastClaimAt clears the value of the "last_claim_at" field.
+func (m *PlayerMutation) ClearLastClaimAt() {
+	m.last_claim_at = nil
+	m.clearedFields[player.FieldLastClaimAt] = struct{}{}
+}
+
+// LastClaimAtCleared returns if the "last_claim_at" field was cleared in this mutation.
+func (m *PlayerMutation) LastClaimAtCleared() bool {
+	_, ok := m.clearedFields[player.FieldLastClaimAt]
+	return ok
+}
+
+// ResetLastClaimAt resets all changes to the "last_claim_at" field.
+func (m *PlayerMutation) ResetLastClaimAt() {
+	m.last_claim_at = nil
+	delete(m.clearedFields, player.FieldLastClaimAt)
+}
+
+// SetEquipmentJSON sets the "equipment_json" field.
+func (m *PlayerMutation) SetEquipmentJSON(value map[string]interface{}) {
+	m.equipment_json = &value
+}
+
+// EquipmentJSON returns the value of the "equipment_json" field in the mutation.
+func (m *PlayerMutation) EquipmentJSON() (r map[string]interface{}, exists bool) {
+	v := m.equipment_json
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEquipmentJSON returns the old "equipment_json" field's value of the Player entity.
+// If the Player object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PlayerMutation) OldEquipmentJSON(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEquipmentJSON is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEquipmentJSON requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEquipmentJSON: %w", err)
+	}
+	return oldValue.EquipmentJSON, nil
+}
+
+// ResetEquipmentJSON resets all changes to the "equipment_json" field.
+func (m *PlayerMutation) ResetEquipmentJSON() {
+	m.equipment_json = nil
+}
+
+// SetClearedMilestones sets the "cleared_milestones" field.
+func (m *PlayerMutation) SetClearedMilestones(i []int32) {
+	m.cleared_milestones = &i
+	m.appendcleared_milestones = nil
+}
+
+// ClearedMilestones returns the value of the "cleared_milestones" field in the mutation.
+func (m *PlayerMutation) ClearedMilestones() (r []int32, exists bool) {
+	v := m.cleared_milestones
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldClearedMilestones returns the old "cleared_milestones" field's value of the Player entity.
+// If the Player object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PlayerMutation) OldClearedMilestones(ctx context.Context) (v []int32, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldClearedMilestones is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldClearedMilestones requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldClearedMilestones: %w", err)
+	}
+	return oldValue.ClearedMilestones, nil
+}
+
+// AppendClearedMilestones adds i to the "cleared_milestones" field.
+func (m *PlayerMutation) AppendClearedMilestones(i []int32) {
+	m.appendcleared_milestones = append(m.appendcleared_milestones, i...)
+}
+
+// AppendedClearedMilestones returns the list of values that were appended to the "cleared_milestones" field in this mutation.
+func (m *PlayerMutation) AppendedClearedMilestones() ([]int32, bool) {
+	if len(m.appendcleared_milestones) == 0 {
+		return nil, false
+	}
+	return m.appendcleared_milestones, true
+}
+
+// ResetClearedMilestones resets all changes to the "cleared_milestones" field.
+func (m *PlayerMutation) ResetClearedMilestones() {
+	m.cleared_milestones = nil
+	m.appendcleared_milestones = nil
+}
+
 // Where appends a list predicates to the PlayerMutation builder.
 func (m *PlayerMutation) Where(ps ...predicate.Player) {
 	m.predicates = append(m.predicates, ps...)
@@ -522,7 +952,7 @@ func (m *PlayerMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PlayerMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 16)
 	if m.platform != nil {
 		fields = append(fields, player.FieldPlatform)
 	}
@@ -546,6 +976,30 @@ func (m *PlayerMutation) Fields() []string {
 	}
 	if m.last_login_at != nil {
 		fields = append(fields, player.FieldLastLoginAt)
+	}
+	if m.gold != nil {
+		fields = append(fields, player.FieldGold)
+	}
+	if m.gems != nil {
+		fields = append(fields, player.FieldGems)
+	}
+	if m.adventure_id != nil {
+		fields = append(fields, player.FieldAdventureID)
+	}
+	if m.stage_index != nil {
+		fields = append(fields, player.FieldStageIndex)
+	}
+	if m.highest_stage_cleared != nil {
+		fields = append(fields, player.FieldHighestStageCleared)
+	}
+	if m.last_claim_at != nil {
+		fields = append(fields, player.FieldLastClaimAt)
+	}
+	if m.equipment_json != nil {
+		fields = append(fields, player.FieldEquipmentJSON)
+	}
+	if m.cleared_milestones != nil {
+		fields = append(fields, player.FieldClearedMilestones)
 	}
 	return fields
 }
@@ -571,6 +1025,22 @@ func (m *PlayerMutation) Field(name string) (ent.Value, bool) {
 		return m.UpdatedAt()
 	case player.FieldLastLoginAt:
 		return m.LastLoginAt()
+	case player.FieldGold:
+		return m.Gold()
+	case player.FieldGems:
+		return m.Gems()
+	case player.FieldAdventureID:
+		return m.AdventureID()
+	case player.FieldStageIndex:
+		return m.StageIndex()
+	case player.FieldHighestStageCleared:
+		return m.HighestStageCleared()
+	case player.FieldLastClaimAt:
+		return m.LastClaimAt()
+	case player.FieldEquipmentJSON:
+		return m.EquipmentJSON()
+	case player.FieldClearedMilestones:
+		return m.ClearedMilestones()
 	}
 	return nil, false
 }
@@ -596,6 +1066,22 @@ func (m *PlayerMutation) OldField(ctx context.Context, name string) (ent.Value, 
 		return m.OldUpdatedAt(ctx)
 	case player.FieldLastLoginAt:
 		return m.OldLastLoginAt(ctx)
+	case player.FieldGold:
+		return m.OldGold(ctx)
+	case player.FieldGems:
+		return m.OldGems(ctx)
+	case player.FieldAdventureID:
+		return m.OldAdventureID(ctx)
+	case player.FieldStageIndex:
+		return m.OldStageIndex(ctx)
+	case player.FieldHighestStageCleared:
+		return m.OldHighestStageCleared(ctx)
+	case player.FieldLastClaimAt:
+		return m.OldLastClaimAt(ctx)
+	case player.FieldEquipmentJSON:
+		return m.OldEquipmentJSON(ctx)
+	case player.FieldClearedMilestones:
+		return m.OldClearedMilestones(ctx)
 	}
 	return nil, fmt.Errorf("unknown Player field %s", name)
 }
@@ -661,6 +1147,62 @@ func (m *PlayerMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetLastLoginAt(v)
 		return nil
+	case player.FieldGold:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGold(v)
+		return nil
+	case player.FieldGems:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGems(v)
+		return nil
+	case player.FieldAdventureID:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAdventureID(v)
+		return nil
+	case player.FieldStageIndex:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStageIndex(v)
+		return nil
+	case player.FieldHighestStageCleared:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHighestStageCleared(v)
+		return nil
+	case player.FieldLastClaimAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastClaimAt(v)
+		return nil
+	case player.FieldEquipmentJSON:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEquipmentJSON(v)
+		return nil
+	case player.FieldClearedMilestones:
+		v, ok := value.([]int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetClearedMilestones(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Player field %s", name)
 }
@@ -675,6 +1217,21 @@ func (m *PlayerMutation) AddedFields() []string {
 	if m.addexp != nil {
 		fields = append(fields, player.FieldExp)
 	}
+	if m.addgold != nil {
+		fields = append(fields, player.FieldGold)
+	}
+	if m.addgems != nil {
+		fields = append(fields, player.FieldGems)
+	}
+	if m.addadventure_id != nil {
+		fields = append(fields, player.FieldAdventureID)
+	}
+	if m.addstage_index != nil {
+		fields = append(fields, player.FieldStageIndex)
+	}
+	if m.addhighest_stage_cleared != nil {
+		fields = append(fields, player.FieldHighestStageCleared)
+	}
 	return fields
 }
 
@@ -687,6 +1244,16 @@ func (m *PlayerMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedLevel()
 	case player.FieldExp:
 		return m.AddedExp()
+	case player.FieldGold:
+		return m.AddedGold()
+	case player.FieldGems:
+		return m.AddedGems()
+	case player.FieldAdventureID:
+		return m.AddedAdventureID()
+	case player.FieldStageIndex:
+		return m.AddedStageIndex()
+	case player.FieldHighestStageCleared:
+		return m.AddedHighestStageCleared()
 	}
 	return nil, false
 }
@@ -710,6 +1277,41 @@ func (m *PlayerMutation) AddField(name string, value ent.Value) error {
 		}
 		m.AddExp(v)
 		return nil
+	case player.FieldGold:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddGold(v)
+		return nil
+	case player.FieldGems:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddGems(v)
+		return nil
+	case player.FieldAdventureID:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddAdventureID(v)
+		return nil
+	case player.FieldStageIndex:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddStageIndex(v)
+		return nil
+	case player.FieldHighestStageCleared:
+		v, ok := value.(int32)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddHighestStageCleared(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Player numeric field %s", name)
 }
@@ -720,6 +1322,9 @@ func (m *PlayerMutation) ClearedFields() []string {
 	var fields []string
 	if m.FieldCleared(player.FieldLastLoginAt) {
 		fields = append(fields, player.FieldLastLoginAt)
+	}
+	if m.FieldCleared(player.FieldLastClaimAt) {
+		fields = append(fields, player.FieldLastClaimAt)
 	}
 	return fields
 }
@@ -737,6 +1342,9 @@ func (m *PlayerMutation) ClearField(name string) error {
 	switch name {
 	case player.FieldLastLoginAt:
 		m.ClearLastLoginAt()
+		return nil
+	case player.FieldLastClaimAt:
+		m.ClearLastClaimAt()
 		return nil
 	}
 	return fmt.Errorf("unknown Player nullable field %s", name)
@@ -769,6 +1377,30 @@ func (m *PlayerMutation) ResetField(name string) error {
 		return nil
 	case player.FieldLastLoginAt:
 		m.ResetLastLoginAt()
+		return nil
+	case player.FieldGold:
+		m.ResetGold()
+		return nil
+	case player.FieldGems:
+		m.ResetGems()
+		return nil
+	case player.FieldAdventureID:
+		m.ResetAdventureID()
+		return nil
+	case player.FieldStageIndex:
+		m.ResetStageIndex()
+		return nil
+	case player.FieldHighestStageCleared:
+		m.ResetHighestStageCleared()
+		return nil
+	case player.FieldLastClaimAt:
+		m.ResetLastClaimAt()
+		return nil
+	case player.FieldEquipmentJSON:
+		m.ResetEquipmentJSON()
+		return nil
+	case player.FieldClearedMilestones:
+		m.ResetClearedMilestones()
 		return nil
 	}
 	return fmt.Errorf("unknown Player field %s", name)

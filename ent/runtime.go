@@ -45,4 +45,32 @@ func init() {
 	player.DefaultUpdatedAt = playerDescUpdatedAt.Default.(func() time.Time)
 	// player.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	player.UpdateDefaultUpdatedAt = playerDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// playerDescGold is the schema descriptor for gold field.
+	playerDescGold := playerFields[8].Descriptor()
+	// player.DefaultGold holds the default value on creation for the gold field.
+	player.DefaultGold = playerDescGold.Default.(int64)
+	// playerDescGems is the schema descriptor for gems field.
+	playerDescGems := playerFields[9].Descriptor()
+	// player.DefaultGems holds the default value on creation for the gems field.
+	player.DefaultGems = playerDescGems.Default.(int64)
+	// playerDescAdventureID is the schema descriptor for adventure_id field.
+	playerDescAdventureID := playerFields[10].Descriptor()
+	// player.DefaultAdventureID holds the default value on creation for the adventure_id field.
+	player.DefaultAdventureID = playerDescAdventureID.Default.(int32)
+	// playerDescStageIndex is the schema descriptor for stage_index field.
+	playerDescStageIndex := playerFields[11].Descriptor()
+	// player.DefaultStageIndex holds the default value on creation for the stage_index field.
+	player.DefaultStageIndex = playerDescStageIndex.Default.(int32)
+	// playerDescHighestStageCleared is the schema descriptor for highest_stage_cleared field.
+	playerDescHighestStageCleared := playerFields[12].Descriptor()
+	// player.DefaultHighestStageCleared holds the default value on creation for the highest_stage_cleared field.
+	player.DefaultHighestStageCleared = playerDescHighestStageCleared.Default.(int32)
+	// playerDescEquipmentJSON is the schema descriptor for equipment_json field.
+	playerDescEquipmentJSON := playerFields[14].Descriptor()
+	// player.DefaultEquipmentJSON holds the default value on creation for the equipment_json field.
+	player.DefaultEquipmentJSON = playerDescEquipmentJSON.Default.(map[string]interface{})
+	// playerDescClearedMilestones is the schema descriptor for cleared_milestones field.
+	playerDescClearedMilestones := playerFields[15].Descriptor()
+	// player.DefaultClearedMilestones holds the default value on creation for the cleared_milestones field.
+	player.DefaultClearedMilestones = playerDescClearedMilestones.Default.([]int32)
 }

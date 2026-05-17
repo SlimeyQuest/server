@@ -5,12 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"time"
 
 	commonv1 "github.com/slimeyquest/proto/gen/go/common"
 	loginv1 "github.com/slimeyquest/proto/gen/go/login"
 	"github.com/slimeyquest/server/ent"
+	"github.com/slimeyquest/server/internal/idle"
 	"github.com/slimeyquest/server/internal/player"
 	"github.com/slimeyquest/server/internal/session"
+	"github.com/slimeyquest/server/internal/stage"
 )
 
 // LiveConn is the websocket connection used during login.
@@ -25,14 +28,24 @@ type Service struct {
 	log      *slog.Logger
 	players  *player.Repository
 	sessions *session.Manager
+	idle     *idle.Service
+	stage    *stage.Service
 }
 
 // NewService creates a login service.
-func NewService(log *slog.Logger, players *player.Repository, sessions *session.Manager) *Service {
+func NewService(
+	log *slog.Logger,
+	players *player.Repository,
+	sessions *session.Manager,
+	idleSvc *idle.Service,
+	stageSvc *stage.Service,
+) *Service {
 	return &Service{
 		log:      log,
 		players:  players,
 		sessions: sessions,
+		idle:     idleSvc,
+		stage:    stageSvc,
 	}
 }
 
@@ -66,6 +79,13 @@ func (s *Service) GuestLogin(ctx context.Context, conn LiveConn, req *loginv1.Gu
 		)
 		return errorRes(commonv1.ErrorCode_ERROR_CODE_INTERNAL, "internal error")
 	}
+
+	state := player.FromEntity(p)
+	now := time.Now().UTC()
+	profile := player.ToProfile(state, s.players.Cfg())
+	idleState := s.idle.PreviewForLogin(ctx, state, now)
+	idleState.PlayerSnapshot = profile
+	stageState := s.stage.BuildStageState(state)
 
 	playerID := int64(p.ID)
 	newSession, replaced := s.sessions.Bind(playerID, conn)
@@ -114,7 +134,9 @@ func (s *Service) GuestLogin(ctx context.Context, conn LiveConn, req *loginv1.Gu
 	return &loginv1.GuestLoginRes{
 		SessionToken: newSession.Token,
 		PlayerId:     playerID,
-		Profile:      player.ToProfile(p),
+		Profile:      profile,
+		IdleState:    idleState,
+		StageState:   stageState,
 	}
 }
 

@@ -35,6 +35,23 @@ func (Player) Fields() []ent.Field {
 		field.Time("last_login_at").
 			Optional().
 			Nillable(),
+		field.Int64("gold").
+			Default(0),
+		field.Int64("gems").
+			Default(0),
+		field.Int32("adventure_id").
+			Default(1),
+		field.Int32("stage_index").
+			Default(1),
+		field.Int32("highest_stage_cleared").
+			Default(0),
+		field.Time("last_claim_at").
+			Optional().
+			Nillable(),
+		field.JSON("equipment_json", map[string]any{}).
+			Default(map[string]any{}),
+		field.JSON("cleared_milestones", []int32{}).
+			Default([]int32{}),
 	}
 }
 

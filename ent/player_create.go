@@ -108,6 +108,102 @@ func (_c *PlayerCreate) SetNillableLastLoginAt(v *time.Time) *PlayerCreate {
 	return _c
 }
 
+// SetGold sets the "gold" field.
+func (_c *PlayerCreate) SetGold(v int64) *PlayerCreate {
+	_c.mutation.SetGold(v)
+	return _c
+}
+
+// SetNillableGold sets the "gold" field if the given value is not nil.
+func (_c *PlayerCreate) SetNillableGold(v *int64) *PlayerCreate {
+	if v != nil {
+		_c.SetGold(*v)
+	}
+	return _c
+}
+
+// SetGems sets the "gems" field.
+func (_c *PlayerCreate) SetGems(v int64) *PlayerCreate {
+	_c.mutation.SetGems(v)
+	return _c
+}
+
+// SetNillableGems sets the "gems" field if the given value is not nil.
+func (_c *PlayerCreate) SetNillableGems(v *int64) *PlayerCreate {
+	if v != nil {
+		_c.SetGems(*v)
+	}
+	return _c
+}
+
+// SetAdventureID sets the "adventure_id" field.
+func (_c *PlayerCreate) SetAdventureID(v int32) *PlayerCreate {
+	_c.mutation.SetAdventureID(v)
+	return _c
+}
+
+// SetNillableAdventureID sets the "adventure_id" field if the given value is not nil.
+func (_c *PlayerCreate) SetNillableAdventureID(v *int32) *PlayerCreate {
+	if v != nil {
+		_c.SetAdventureID(*v)
+	}
+	return _c
+}
+
+// SetStageIndex sets the "stage_index" field.
+func (_c *PlayerCreate) SetStageIndex(v int32) *PlayerCreate {
+	_c.mutation.SetStageIndex(v)
+	return _c
+}
+
+// SetNillableStageIndex sets the "stage_index" field if the given value is not nil.
+func (_c *PlayerCreate) SetNillableStageIndex(v *int32) *PlayerCreate {
+	if v != nil {
+		_c.SetStageIndex(*v)
+	}
+	return _c
+}
+
+// SetHighestStageCleared sets the "highest_stage_cleared" field.
+func (_c *PlayerCreate) SetHighestStageCleared(v int32) *PlayerCreate {
+	_c.mutation.SetHighestStageCleared(v)
+	return _c
+}
+
+// SetNillableHighestStageCleared sets the "highest_stage_cleared" field if the given value is not nil.
+func (_c *PlayerCreate) SetNillableHighestStageCleared(v *int32) *PlayerCreate {
+	if v != nil {
+		_c.SetHighestStageCleared(*v)
+	}
+	return _c
+}
+
+// SetLastClaimAt sets the "last_claim_at" field.
+func (_c *PlayerCreate) SetLastClaimAt(v time.Time) *PlayerCreate {
+	_c.mutation.SetLastClaimAt(v)
+	return _c
+}
+
+// SetNillableLastClaimAt sets the "last_claim_at" field if the given value is not nil.
+func (_c *PlayerCreate) SetNillableLastClaimAt(v *time.Time) *PlayerCreate {
+	if v != nil {
+		_c.SetLastClaimAt(*v)
+	}
+	return _c
+}
+
+// SetEquipmentJSON sets the "equipment_json" field.
+func (_c *PlayerCreate) SetEquipmentJSON(v map[string]interface{}) *PlayerCreate {
+	_c.mutation.SetEquipmentJSON(v)
+	return _c
+}
+
+// SetClearedMilestones sets the "cleared_milestones" field.
+func (_c *PlayerCreate) SetClearedMilestones(v []int32) *PlayerCreate {
+	_c.mutation.SetClearedMilestones(v)
+	return _c
+}
+
 // Mutation returns the PlayerMutation object of the builder.
 func (_c *PlayerCreate) Mutation() *PlayerMutation {
 	return _c.mutation
@@ -159,6 +255,34 @@ func (_c *PlayerCreate) defaults() {
 		v := player.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := _c.mutation.Gold(); !ok {
+		v := player.DefaultGold
+		_c.mutation.SetGold(v)
+	}
+	if _, ok := _c.mutation.Gems(); !ok {
+		v := player.DefaultGems
+		_c.mutation.SetGems(v)
+	}
+	if _, ok := _c.mutation.AdventureID(); !ok {
+		v := player.DefaultAdventureID
+		_c.mutation.SetAdventureID(v)
+	}
+	if _, ok := _c.mutation.StageIndex(); !ok {
+		v := player.DefaultStageIndex
+		_c.mutation.SetStageIndex(v)
+	}
+	if _, ok := _c.mutation.HighestStageCleared(); !ok {
+		v := player.DefaultHighestStageCleared
+		_c.mutation.SetHighestStageCleared(v)
+	}
+	if _, ok := _c.mutation.EquipmentJSON(); !ok {
+		v := player.DefaultEquipmentJSON
+		_c.mutation.SetEquipmentJSON(v)
+	}
+	if _, ok := _c.mutation.ClearedMilestones(); !ok {
+		v := player.DefaultClearedMilestones
+		_c.mutation.SetClearedMilestones(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -198,6 +322,27 @@ func (_c *PlayerCreate) check() error {
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Player.updated_at"`)}
+	}
+	if _, ok := _c.mutation.Gold(); !ok {
+		return &ValidationError{Name: "gold", err: errors.New(`ent: missing required field "Player.gold"`)}
+	}
+	if _, ok := _c.mutation.Gems(); !ok {
+		return &ValidationError{Name: "gems", err: errors.New(`ent: missing required field "Player.gems"`)}
+	}
+	if _, ok := _c.mutation.AdventureID(); !ok {
+		return &ValidationError{Name: "adventure_id", err: errors.New(`ent: missing required field "Player.adventure_id"`)}
+	}
+	if _, ok := _c.mutation.StageIndex(); !ok {
+		return &ValidationError{Name: "stage_index", err: errors.New(`ent: missing required field "Player.stage_index"`)}
+	}
+	if _, ok := _c.mutation.HighestStageCleared(); !ok {
+		return &ValidationError{Name: "highest_stage_cleared", err: errors.New(`ent: missing required field "Player.highest_stage_cleared"`)}
+	}
+	if _, ok := _c.mutation.EquipmentJSON(); !ok {
+		return &ValidationError{Name: "equipment_json", err: errors.New(`ent: missing required field "Player.equipment_json"`)}
+	}
+	if _, ok := _c.mutation.ClearedMilestones(); !ok {
+		return &ValidationError{Name: "cleared_milestones", err: errors.New(`ent: missing required field "Player.cleared_milestones"`)}
 	}
 	return nil
 }
@@ -256,6 +401,38 @@ func (_c *PlayerCreate) createSpec() (*Player, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.LastLoginAt(); ok {
 		_spec.SetField(player.FieldLastLoginAt, field.TypeTime, value)
 		_node.LastLoginAt = &value
+	}
+	if value, ok := _c.mutation.Gold(); ok {
+		_spec.SetField(player.FieldGold, field.TypeInt64, value)
+		_node.Gold = value
+	}
+	if value, ok := _c.mutation.Gems(); ok {
+		_spec.SetField(player.FieldGems, field.TypeInt64, value)
+		_node.Gems = value
+	}
+	if value, ok := _c.mutation.AdventureID(); ok {
+		_spec.SetField(player.FieldAdventureID, field.TypeInt32, value)
+		_node.AdventureID = value
+	}
+	if value, ok := _c.mutation.StageIndex(); ok {
+		_spec.SetField(player.FieldStageIndex, field.TypeInt32, value)
+		_node.StageIndex = value
+	}
+	if value, ok := _c.mutation.HighestStageCleared(); ok {
+		_spec.SetField(player.FieldHighestStageCleared, field.TypeInt32, value)
+		_node.HighestStageCleared = value
+	}
+	if value, ok := _c.mutation.LastClaimAt(); ok {
+		_spec.SetField(player.FieldLastClaimAt, field.TypeTime, value)
+		_node.LastClaimAt = &value
+	}
+	if value, ok := _c.mutation.EquipmentJSON(); ok {
+		_spec.SetField(player.FieldEquipmentJSON, field.TypeJSON, value)
+		_node.EquipmentJSON = value
+	}
+	if value, ok := _c.mutation.ClearedMilestones(); ok {
+		_spec.SetField(player.FieldClearedMilestones, field.TypeJSON, value)
+		_node.ClearedMilestones = value
 	}
 	return _node, _spec
 }

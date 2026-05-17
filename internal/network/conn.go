@@ -24,6 +24,7 @@ type Conn struct {
 	ws            *websocket.Conn
 	hub           *Hub
 	loginSvc      *login.Service
+	gameplay      *Gameplay
 	send          chan []byte
 	ctx           context.Context
 	cancel        context.CancelFunc
@@ -33,7 +34,7 @@ type Conn struct {
 	authenticated bool
 }
 
-func newConn(id string, log *slog.Logger, ws *websocket.Conn, hub *Hub, loginSvc *login.Service) *Conn {
+func newConn(id string, log *slog.Logger, ws *websocket.Conn, hub *Hub, loginSvc *login.Service, gameplay *Gameplay) *Conn {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Conn{
 		id:       id,
@@ -41,6 +42,7 @@ func newConn(id string, log *slog.Logger, ws *websocket.Conn, hub *Hub, loginSvc
 		ws:       ws,
 		hub:      hub,
 		loginSvc: loginSvc,
+		gameplay: gameplay,
 		send:     make(chan []byte, 16),
 		ctx:      ctx,
 		cancel:   cancel,
@@ -98,12 +100,14 @@ func (c *Conn) readPump() {
 		}
 
 		if c.authenticated {
-			c.log.Info("login_rejected", "reason", "unexpected_message_after_login")
-			return
+			if err := c.gameplay.handleMessage(c, message); err != nil {
+				c.log.Debug("gameplay message error", "error", err)
+			}
+			continue
 		}
 
 		if c.handleGuestLogin(message) {
-			return
+			continue
 		}
 	}
 }
@@ -130,7 +134,7 @@ func (c *Conn) handleGuestLogin(message []byte) bool {
 		return true
 	}
 
-	return false
+	return false // keep connection open for gameplay messages
 }
 
 func (c *Conn) sendLoginResponse(res *loginv1.GuestLoginRes) bool {

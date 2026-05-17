@@ -10,10 +10,14 @@ import (
 	"sync"
 
 	"github.com/slimeyquest/server/internal/config"
+	"github.com/slimeyquest/server/internal/gameplayconfig"
+	"github.com/slimeyquest/server/internal/idle"
 	"github.com/slimeyquest/server/internal/login"
 	"github.com/slimeyquest/server/internal/network"
 	"github.com/slimeyquest/server/internal/player"
+	"github.com/slimeyquest/server/internal/reward"
 	"github.com/slimeyquest/server/internal/session"
+	"github.com/slimeyquest/server/internal/stage"
 	"github.com/slimeyquest/server/internal/storage"
 )
 
@@ -50,11 +54,23 @@ func New(ctx context.Context, cfg *config.Config, log *slog.Logger) (*App, error
 		return nil, fmt.Errorf("init ent: %w", err)
 	}
 
-	playerRepo := player.NewRepository(entClient.Client())
+	gameplayCfg, err := gameplayconfig.Load()
+	if err != nil {
+		entClient.Close()
+		redis.Close()
+		postgres.Close()
+		return nil, fmt.Errorf("load gameplay config: %w", err)
+	}
+
+	playerRepo := player.NewRepository(entClient.Client(), gameplayCfg)
 	sessionMgr := session.NewManager()
-	loginSvc := login.NewService(log.With("component", "login"), playerRepo, sessionMgr)
+	rewardSvc := reward.NewService(log.With("component", "reward"), gameplayCfg, playerRepo)
+	idleSvc := idle.NewService(log.With("component", "idle"), gameplayCfg, playerRepo, rewardSvc)
+	stageSvc := stage.NewService(log.With("component", "stage"), gameplayCfg, playerRepo, rewardSvc)
+	loginSvc := login.NewService(log.With("component", "login"), playerRepo, sessionMgr, idleSvc, stageSvc)
+	gameplayHandler := network.NewGameplay(idleSvc, stageSvc, sessionMgr)
 	hub := network.NewHub(log.With("component", "hub"), sessionMgr)
-	server := network.NewServer(cfg, log.With("component", "http"), hub, loginSvc)
+	server := network.NewServer(cfg, log.With("component", "http"), hub, loginSvc, gameplayHandler)
 
 	return &App{
 		cfg:      cfg,

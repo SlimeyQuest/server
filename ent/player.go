@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -32,8 +33,24 @@ type Player struct {
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// LastLoginAt holds the value of the "last_login_at" field.
-	LastLoginAt  *time.Time `json:"last_login_at,omitempty"`
-	selectValues sql.SelectValues
+	LastLoginAt *time.Time `json:"last_login_at,omitempty"`
+	// Gold holds the value of the "gold" field.
+	Gold int64 `json:"gold,omitempty"`
+	// Gems holds the value of the "gems" field.
+	Gems int64 `json:"gems,omitempty"`
+	// AdventureID holds the value of the "adventure_id" field.
+	AdventureID int32 `json:"adventure_id,omitempty"`
+	// StageIndex holds the value of the "stage_index" field.
+	StageIndex int32 `json:"stage_index,omitempty"`
+	// HighestStageCleared holds the value of the "highest_stage_cleared" field.
+	HighestStageCleared int32 `json:"highest_stage_cleared,omitempty"`
+	// LastClaimAt holds the value of the "last_claim_at" field.
+	LastClaimAt *time.Time `json:"last_claim_at,omitempty"`
+	// EquipmentJSON holds the value of the "equipment_json" field.
+	EquipmentJSON map[string]interface{} `json:"equipment_json,omitempty"`
+	// ClearedMilestones holds the value of the "cleared_milestones" field.
+	ClearedMilestones []int32 `json:"cleared_milestones,omitempty"`
+	selectValues      sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -41,11 +58,13 @@ func (*Player) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case player.FieldID, player.FieldLevel, player.FieldExp:
+		case player.FieldEquipmentJSON, player.FieldClearedMilestones:
+			values[i] = new([]byte)
+		case player.FieldID, player.FieldLevel, player.FieldExp, player.FieldGold, player.FieldGems, player.FieldAdventureID, player.FieldStageIndex, player.FieldHighestStageCleared:
 			values[i] = new(sql.NullInt64)
 		case player.FieldPlatform, player.FieldExternalID, player.FieldNickname:
 			values[i] = new(sql.NullString)
-		case player.FieldCreatedAt, player.FieldUpdatedAt, player.FieldLastLoginAt:
+		case player.FieldCreatedAt, player.FieldUpdatedAt, player.FieldLastLoginAt, player.FieldLastClaimAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -117,6 +136,59 @@ func (_m *Player) assignValues(columns []string, values []any) error {
 				_m.LastLoginAt = new(time.Time)
 				*_m.LastLoginAt = value.Time
 			}
+		case player.FieldGold:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field gold", values[i])
+			} else if value.Valid {
+				_m.Gold = value.Int64
+			}
+		case player.FieldGems:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field gems", values[i])
+			} else if value.Valid {
+				_m.Gems = value.Int64
+			}
+		case player.FieldAdventureID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field adventure_id", values[i])
+			} else if value.Valid {
+				_m.AdventureID = int32(value.Int64)
+			}
+		case player.FieldStageIndex:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field stage_index", values[i])
+			} else if value.Valid {
+				_m.StageIndex = int32(value.Int64)
+			}
+		case player.FieldHighestStageCleared:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field highest_stage_cleared", values[i])
+			} else if value.Valid {
+				_m.HighestStageCleared = int32(value.Int64)
+			}
+		case player.FieldLastClaimAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field last_claim_at", values[i])
+			} else if value.Valid {
+				_m.LastClaimAt = new(time.Time)
+				*_m.LastClaimAt = value.Time
+			}
+		case player.FieldEquipmentJSON:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field equipment_json", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.EquipmentJSON); err != nil {
+					return fmt.Errorf("unmarshal field equipment_json: %w", err)
+				}
+			}
+		case player.FieldClearedMilestones:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field cleared_milestones", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.ClearedMilestones); err != nil {
+					return fmt.Errorf("unmarshal field cleared_milestones: %w", err)
+				}
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -178,6 +250,32 @@ func (_m *Player) String() string {
 		builder.WriteString("last_login_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
+	builder.WriteString(", ")
+	builder.WriteString("gold=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Gold))
+	builder.WriteString(", ")
+	builder.WriteString("gems=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Gems))
+	builder.WriteString(", ")
+	builder.WriteString("adventure_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.AdventureID))
+	builder.WriteString(", ")
+	builder.WriteString("stage_index=")
+	builder.WriteString(fmt.Sprintf("%v", _m.StageIndex))
+	builder.WriteString(", ")
+	builder.WriteString("highest_stage_cleared=")
+	builder.WriteString(fmt.Sprintf("%v", _m.HighestStageCleared))
+	builder.WriteString(", ")
+	if v := _m.LastClaimAt; v != nil {
+		builder.WriteString("last_claim_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	builder.WriteString("equipment_json=")
+	builder.WriteString(fmt.Sprintf("%v", _m.EquipmentJSON))
+	builder.WriteString(", ")
+	builder.WriteString("cleared_milestones=")
+	builder.WriteString(fmt.Sprintf("%v", _m.ClearedMilestones))
 	builder.WriteByte(')')
 	return builder.String()
 }

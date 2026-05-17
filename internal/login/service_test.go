@@ -11,17 +11,22 @@ import (
 
 	commonv1 "github.com/slimeyquest/proto/gen/go/common"
 	loginv1 "github.com/slimeyquest/proto/gen/go/login"
+	"github.com/slimeyquest/server/ent"
 	"github.com/slimeyquest/server/ent/enttest"
+	"github.com/slimeyquest/server/internal/gameplayconfig"
+	"github.com/slimeyquest/server/internal/idle"
 	"github.com/slimeyquest/server/internal/login"
 	"github.com/slimeyquest/server/internal/player"
+	"github.com/slimeyquest/server/internal/reward"
 	"github.com/slimeyquest/server/internal/session"
+	"github.com/slimeyquest/server/internal/stage"
 )
 
 type fakeConn struct {
-	id        string
-	playerID  int64
-	token     string
-	closed    bool
+	id       string
+	playerID int64
+	token    string
+	closed   bool
 }
 
 func (f *fakeConn) ID() string { return f.id }
@@ -31,14 +36,26 @@ func (f *fakeConn) SetAuthenticated(playerID int64, token string) {
 	f.token = token
 }
 
+func newTestLoginService(t *testing.T, client *ent.Client) *login.Service {
+	t.Helper()
+	cfg, err := gameplayconfig.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	log := slog.New(slog.NewTextHandler(io.Discard, nil))
+	repo := player.NewRepository(client, cfg)
+	sessions := session.NewManager()
+	rewardSvc := reward.NewService(log, cfg, repo)
+	idleSvc := idle.NewService(log, cfg, repo, rewardSvc)
+	stageSvc := stage.NewService(log, cfg, repo, rewardSvc)
+	return login.NewService(log, repo, sessions, idleSvc, stageSvc)
+}
+
 func TestGuestLoginCreatesAndResumesPlayer(t *testing.T) {
 	client := enttest.Open(t, dialect.SQLite, "file:ent?mode=memory&cache=shared&_fk=1")
 	defer client.Close()
 
-	log := slog.New(slog.NewTextHandler(io.Discard, nil))
-	repo := player.NewRepository(client)
-	sessions := session.NewManager()
-	svc := login.NewService(log, repo, sessions)
+	svc := newTestLoginService(t, client)
 	ctx := context.Background()
 
 	conn1 := &fakeConn{id: "conn-1"}
@@ -57,6 +74,12 @@ func TestGuestLoginCreatesAndResumesPlayer(t *testing.T) {
 	}
 	if !player.ValidateDefaultNicknamePattern(res.GetProfile().GetDisplayName()) {
 		t.Fatalf("unexpected nickname: %s", res.GetProfile().GetDisplayName())
+	}
+	if res.GetIdleState() == nil || res.GetStageState() == nil {
+		t.Fatal("expected idle and stage snapshots on login")
+	}
+	if res.GetProfile().GetCombatPower() < 100 {
+		t.Fatalf("expected starter combat power, got %d", res.GetProfile().GetCombatPower())
 	}
 
 	conn2 := &fakeConn{id: "conn-2"}
@@ -79,8 +102,7 @@ func TestGuestLoginRejectsEmptyDeviceID(t *testing.T) {
 	client := enttest.Open(t, dialect.SQLite, "file:ent?mode=memory&cache=shared&_fk=1")
 	defer client.Close()
 
-	log := slog.New(slog.NewTextHandler(io.Discard, nil))
-	svc := login.NewService(log, player.NewRepository(client), session.NewManager())
+	svc := newTestLoginService(t, client)
 
 	res := svc.GuestLogin(context.Background(), &fakeConn{id: "conn-1"}, &loginv1.GuestLoginReq{})
 	if login.IsSuccess(res) {

@@ -19,6 +19,14 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "last_login_at", Type: field.TypeTime, Nullable: true},
+		{Name: "gold", Type: field.TypeInt64, Default: 0},
+		{Name: "gems", Type: field.TypeInt64, Default: 0},
+		{Name: "adventure_id", Type: field.TypeInt32, Default: 1},
+		{Name: "stage_index", Type: field.TypeInt32, Default: 1},
+		{Name: "highest_stage_cleared", Type: field.TypeInt32, Default: 0},
+		{Name: "last_claim_at", Type: field.TypeTime, Nullable: true},
+		{Name: "equipment_json", Type: field.TypeJSON},
+		{Name: "cleared_milestones", Type: field.TypeJSON},
 	}
 	// PlayersTable holds the schema information for the "players" table.
 	PlayersTable = &schema.Table{

@@ -27,18 +27,20 @@ type Server struct {
 	log       *slog.Logger
 	hub       *Hub
 	loginSvc  *login.Service
+	gameplay  *Gameplay
 	http      *http.Server
 	connSeq   atomic.Uint64
 	startTime time.Time
 }
 
 // NewServer creates the HTTP/WebSocket server.
-func NewServer(cfg *config.Config, log *slog.Logger, hub *Hub, loginSvc *login.Service) *Server {
+func NewServer(cfg *config.Config, log *slog.Logger, hub *Hub, loginSvc *login.Service, gameplay *Gameplay) *Server {
 	return &Server{
 		cfg:       cfg,
 		log:       log,
 		hub:       hub,
 		loginSvc:  loginSvc,
+		gameplay:  gameplay,
 		startTime: time.Now(),
 	}
 }
@@ -94,6 +96,6 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	seq := s.connSeq.Add(1)
 	connID := fmt.Sprintf("conn-%d", seq)
-	conn := newConn(connID, s.log, ws, s.hub, s.loginSvc)
+	conn := newConn(connID, s.log, ws, s.hub, s.loginSvc, s.gameplay)
 	conn.Serve()
 }

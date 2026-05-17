@@ -94,6 +94,18 @@ func (m *Manager) GetByPlayerID(playerID int64) (*Session, bool) {
 	return session, ok
 }
 
+// Validate reports whether the token is the active session for the player.
+func (m *Manager) Validate(playerID int64, token string) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	session, ok := m.byPlayerID[playerID]
+	if !ok {
+		return false
+	}
+	return session.Token == token
+}
+
 // GetByToken returns a session by token.
 func (m *Manager) GetByToken(token string) (*Session, bool) {
 	m.mu.Lock()
