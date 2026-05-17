@@ -4,21 +4,25 @@ import (
 	"context"
 	"log/slog"
 	"sync"
+
+	"github.com/slimeyquest/server/internal/session"
 )
 
 // Hub manages active WebSocket connections.
 type Hub struct {
-	log    *slog.Logger
-	mu     sync.RWMutex
-	conns  map[string]*Conn
-	closed bool
+	log      *slog.Logger
+	sessions *session.Manager
+	mu       sync.RWMutex
+	conns    map[string]*Conn
+	closed   bool
 }
 
 // NewHub creates a connection manager.
-func NewHub(log *slog.Logger) *Hub {
+func NewHub(log *slog.Logger, sessions *session.Manager) *Hub {
 	return &Hub{
-		log:   log,
-		conns: make(map[string]*Conn),
+		log:      log,
+		sessions: sessions,
+		conns:    make(map[string]*Conn),
 	}
 }
 
@@ -37,10 +41,24 @@ func (h *Hub) Register(conn *Conn) {
 func (h *Hub) Unregister(conn *Conn) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	if _, ok := h.conns[conn.ID()]; ok {
-		delete(h.conns, conn.ID())
-		h.log.Info("websocket disconnected", "conn_id", conn.ID(), "active", len(h.conns))
+	if _, ok := h.conns[conn.ID()]; !ok {
+		return
 	}
+	delete(h.conns, conn.ID())
+
+	var token string
+	var playerID int64
+	if removed := h.sessions.UnbindConn(conn); removed != nil {
+		token = removed.Token
+		playerID = removed.PlayerID
+	}
+
+	h.log.Info("websocket disconnected",
+		"conn_id", conn.ID(),
+		"player_id", playerID,
+		"token", token,
+		"active", len(h.conns),
+	)
 }
 
 // CloseAll closes every active connection during shutdown.

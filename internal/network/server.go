@@ -12,6 +12,7 @@ import (
 	"github.com/coder/websocket"
 
 	"github.com/slimeyquest/server/internal/config"
+	"github.com/slimeyquest/server/internal/login"
 )
 
 type healthResponse struct {
@@ -25,17 +26,19 @@ type Server struct {
 	cfg       *config.Config
 	log       *slog.Logger
 	hub       *Hub
+	loginSvc  *login.Service
 	http      *http.Server
 	connSeq   atomic.Uint64
 	startTime time.Time
 }
 
 // NewServer creates the HTTP/WebSocket server.
-func NewServer(cfg *config.Config, log *slog.Logger, hub *Hub) *Server {
+func NewServer(cfg *config.Config, log *slog.Logger, hub *Hub, loginSvc *login.Service) *Server {
 	return &Server{
 		cfg:       cfg,
 		log:       log,
 		hub:       hub,
+		loginSvc:  loginSvc,
 		startTime: time.Now(),
 	}
 }
@@ -91,6 +94,6 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	seq := s.connSeq.Add(1)
 	connID := fmt.Sprintf("conn-%d", seq)
-	conn := newConn(connID, s.log, ws, s.hub)
+	conn := newConn(connID, s.log, ws, s.hub, s.loginSvc)
 	conn.Serve()
 }

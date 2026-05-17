@@ -10,7 +10,10 @@ import (
 	"sync"
 
 	"github.com/slimeyquest/server/internal/config"
+	"github.com/slimeyquest/server/internal/login"
 	"github.com/slimeyquest/server/internal/network"
+	"github.com/slimeyquest/server/internal/player"
+	"github.com/slimeyquest/server/internal/session"
 	"github.com/slimeyquest/server/internal/storage"
 )
 
@@ -20,6 +23,7 @@ type App struct {
 	log      *slog.Logger
 	postgres *storage.Postgres
 	redis    *storage.Redis
+	ent      *storage.Ent
 	hub      *network.Hub
 	server   *network.Server
 }
@@ -39,14 +43,25 @@ func New(ctx context.Context, cfg *config.Config, log *slog.Logger) (*App, error
 	}
 	log.Info("redis connected")
 
-	hub := network.NewHub(log)
-	server := network.NewServer(cfg, log, hub)
+	entClient, err := storage.NewEnt(ctx, cfg.PostgresDSN, log)
+	if err != nil {
+		redis.Close()
+		postgres.Close()
+		return nil, fmt.Errorf("init ent: %w", err)
+	}
+
+	playerRepo := player.NewRepository(entClient.Client())
+	sessionMgr := session.NewManager()
+	loginSvc := login.NewService(log.With("component", "login"), playerRepo, sessionMgr)
+	hub := network.NewHub(log.With("component", "hub"), sessionMgr)
+	server := network.NewServer(cfg, log.With("component", "http"), hub, loginSvc)
 
 	return &App{
 		cfg:      cfg,
 		log:      log,
 		postgres: postgres,
 		redis:    redis,
+		ent:      entClient,
 		hub:      hub,
 		server:   server,
 	}, nil
@@ -112,6 +127,7 @@ func (a *App) shutdown(ctx context.Context) error {
 	}
 
 	a.hub.CloseAll()
+	a.ent.Close()
 	a.postgres.Close()
 	if err := a.redis.Close(); err != nil {
 		a.log.Warn("redis close error", "error", err)

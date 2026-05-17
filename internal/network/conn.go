@@ -8,38 +8,65 @@ import (
 	"time"
 
 	"github.com/coder/websocket"
+	"google.golang.org/protobuf/proto"
+
+	commonv1 "github.com/slimeyquest/proto/gen/go/common"
+	loginv1 "github.com/slimeyquest/proto/gen/go/login"
+	"github.com/slimeyquest/server/internal/login"
 )
 
 const pingPeriod = 54 * time.Second
 
 // Conn represents a single WebSocket client connection.
 type Conn struct {
-	id     string
-	log    *slog.Logger
-	ws     *websocket.Conn
-	hub    *Hub
-	send   chan []byte
-	ctx    context.Context
-	cancel context.CancelFunc
-	once   sync.Once
+	id            string
+	log           *slog.Logger
+	ws            *websocket.Conn
+	hub           *Hub
+	loginSvc      *login.Service
+	send          chan []byte
+	ctx           context.Context
+	cancel        context.CancelFunc
+	once          sync.Once
+	playerID      int64
+	token         string
+	authenticated bool
 }
 
-func newConn(id string, log *slog.Logger, ws *websocket.Conn, hub *Hub) *Conn {
+func newConn(id string, log *slog.Logger, ws *websocket.Conn, hub *Hub, loginSvc *login.Service) *Conn {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Conn{
-		id:     id,
-		log:    log.With("conn_id", id),
-		ws:     ws,
-		hub:    hub,
-		send:   make(chan []byte, 16),
-		ctx:    ctx,
-		cancel: cancel,
+		id:       id,
+		log:      log.With("conn_id", id),
+		ws:       ws,
+		hub:      hub,
+		loginSvc: loginSvc,
+		send:     make(chan []byte, 16),
+		ctx:      ctx,
+		cancel:   cancel,
 	}
 }
 
 // ID returns the connection identifier.
 func (c *Conn) ID() string {
 	return c.id
+}
+
+// PlayerID returns the authenticated player id, or zero if not logged in.
+func (c *Conn) PlayerID() int64 {
+	return c.playerID
+}
+
+// Token returns the active session token, or empty if not logged in.
+func (c *Conn) Token() string {
+	return c.token
+}
+
+// SetAuthenticated marks the connection as logged in.
+func (c *Conn) SetAuthenticated(playerID int64, token string) {
+	c.playerID = playerID
+	c.token = token
+	c.authenticated = true
 }
 
 // Serve starts read and write pumps until the connection closes.
@@ -70,8 +97,65 @@ func (c *Conn) readPump() {
 			return
 		}
 
-		// Foundation only: discard client frames until protobuf handlers exist.
-		c.log.Debug("websocket frame received", "bytes", len(message))
+		if c.authenticated {
+			c.log.Info("login_rejected", "reason", "unexpected_message_after_login")
+			return
+		}
+
+		if c.handleGuestLogin(message) {
+			return
+		}
+	}
+}
+
+// handleGuestLogin processes the first login packet. Returns true when the connection should close.
+func (c *Conn) handleGuestLogin(message []byte) bool {
+	req := &loginv1.GuestLoginReq{}
+	if err := proto.Unmarshal(message, req); err != nil {
+		c.log.Warn("invalid guest login payload", "error", err)
+		c.sendLoginResponse(errorRes(commonv1.ErrorCode_ERROR_CODE_INVALID_REQUEST, "invalid guest login payload"))
+		c.log.Info("login_rejected", "reason", "invalid_payload")
+		return true
+	}
+
+	res := c.loginSvc.GuestLogin(c.ctx, c, req)
+	if !login.IsSuccess(res) {
+		c.sendLoginResponse(res)
+		c.log.Info("login_rejected", "reason", "login_failed")
+		return true
+	}
+
+	if !c.sendLoginResponse(res) {
+		c.log.Info("login_rejected", "reason", "marshal_response_failed")
+		return true
+	}
+
+	return false
+}
+
+func (c *Conn) sendLoginResponse(res *loginv1.GuestLoginRes) bool {
+	payload, err := proto.Marshal(res)
+	if err != nil {
+		c.log.Error("marshal guest login response failed", "error", err)
+		return false
+	}
+	c.sendResponse(payload)
+	return true
+}
+
+func errorRes(code commonv1.ErrorCode, message string) *loginv1.GuestLoginRes {
+	return &loginv1.GuestLoginRes{
+		Error: &commonv1.ErrorInfo{
+			Code:    code,
+			Message: message,
+		},
+	}
+}
+
+func (c *Conn) sendResponse(payload []byte) {
+	select {
+	case <-c.ctx.Done():
+	case c.send <- payload:
 	}
 }
 
