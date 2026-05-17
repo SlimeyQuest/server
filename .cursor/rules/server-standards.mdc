@@ -1,189 +1,326 @@
 ---
-# 所有 Agent 自动应用
 alwaysApply: true
 ---
-
 # =========================================================
+
 # Server Standards
+
 # 微信小游戏 Go 服务端开发规范
+
 # =========================================================
 
 ## Tech Stack
 
 # 使用 Go 1.26
-- Use Go 1.26
 
-# Gin 作为 HTTP 框架
-- Use Gin for HTTP APIs when needed
+* Use Go 1.26
 
-# websocket 作为实时通信协议
-- Use websocket for realtime communication
+# Gin 用于必要 HTTP 接口
+
+* Use Gin only for required HTTP APIs
+
+# websocket 为核心实时协议
+
+* Use websocket as the primary realtime communication protocol
 
 # protobuf-first 接口设计
-- Use protobuf-first API design
+
+* Use protobuf-first API design
 
 # 使用 ent ORM
-- Use ent ORM
 
-# 使用 MySQL
-- Use MySQL
+* Use ent ORM
+
+# 使用 PostgreSQL
+
+* Use PostgreSQL
 
 # 使用 Redis
-- Use Redis
 
+* Use Redis
 
 ## Project Goals
 
 # 服务端目标：轻度放置 RPG
-- The backend serves a mobile idle RPG game
+
+* The backend serves a mobile idle RPG game
 
 # 优先稳定和快速迭代
-- Prioritize stability and fast iteration
+
+* Prioritize stability and fast iteration
 
 # 架构保持简单易维护
-- Keep architecture simple and maintainable
+
+* Keep architecture simple and maintainable
 
 # 避免过早分布式设计
-- Avoid premature distributed architecture
 
+* Avoid premature distributed architecture
+
+# 优先 AI Native 工作流
+
+* Prefer AI-assisted iterative development workflows
 
 ## Architecture
 
+# 使用模块化单体架构
+
+* Use modular monolith architecture
+
 # 业务逻辑放 service 层
-- Keep business logic inside service layer
+
+* Keep gameplay logic inside service layer
 
 # handler/gateway 保持轻量
-- Keep handlers/gateways thin
+
+* Keep handlers and gateways thin
 
 # 网关、玩法、持久化分层
-- Separate gateway, gameplay, and persistence logic
+
+* Separate gateway, gameplay, and persistence logic
 
 # 使用模块化目录结构
-- Prefer modular package structure
+
+* Prefer modular package structure
 
 # 避免循环依赖
-- Avoid circular dependencies
+
+* Avoid circular dependencies
 
 # 优先复用已有模式
-- Reuse existing patterns before introducing new abstractions
 
+* Reuse existing patterns before introducing abstractions
+
+# 避免过度接口化
+
+* Avoid unnecessary interfaces and abstractions
+
+# 禁止微服务化
+
+* Do not introduce microservices during MVP
 
 ## Gameplay
 
-# 游戏逻辑尽量在内存运行
-- Gameplay logic should primarily run in memory
+# 游戏逻辑尽量以内存计算
+
+* Gameplay systems should primarily run in memory
 
 # 避免频繁写数据库
-- Avoid frequent database writes during gameplay
+
+* Avoid excessive database writes during gameplay
 
 # 优先批量落库
-- Use batch persistence whenever possible
+
+* Prefer batch persistence when possible
 
 # Redis 用于缓存/排行/在线状态
-- Redis should be used for cache, ranking, and online state
 
-# MySQL 用于永久数据
-- MySQL should be used for persistent player data
+* Redis should be used for cache, ranking, and online state
 
+# PostgreSQL 用于永久数据
+
+* PostgreSQL should be used for persistent player data
+
+# 配置驱动数值系统
+
+* Prefer configuration-driven gameplay balancing
 
 ## Database
 
+# 使用 PostgreSQL 特性
+
+* Leverage PostgreSQL strengths appropriately
+
+# JSONB 可用于扩展玩法数据
+
+* JSONB may be used for extensible gameplay metadata when appropriate
+
 # 避免 N+1 查询
-- Avoid N+1 queries
+
+* Avoid N+1 queries
 
 # 大数据使用分页
-- Use pagination for large datasets
+
+* Use pagination for large datasets
 
 # 优先批量操作
-- Prefer batch operations
+
+* Prefer batch operations
 
 # 禁止危险全表更新
-- Avoid dangerous full table updates/deletes
 
-# 禁止自动 destructive migration
-- Never generate automatic destructive migrations
+* Avoid dangerous full table updates/deletes
+
+# 禁止 destructive migration
+
+* Never generate destructive schema migrations automatically
 
 # 使用渐进式 schema 演化
-- Prefer incremental schema evolution
 
+* Prefer incremental schema evolution
+
+# schema 必须保持清晰稳定
+
+* Keep schema evolution explicit and maintainable
 
 ## Redis
 
 # redis key 集中管理
-- Centralize redis keys as constants
+
+* Centralize redis keys as constants
 
 # 使用清晰 key 命名
-- Use clear redis key naming conventions
+
+* Use clear redis key naming conventions
 
 # 避免重复缓存逻辑
-- Avoid duplicated cache logic
 
+* Avoid duplicated cache logic
 
 ## Networking
 
-# 协议统一来自 shared/proto
-- All protocols must come from shared/proto
+# 协议统一来自 proto 仓库
+
+* All protocols must come from the shared proto repository
 
 # websocket 为主协议
-- Websocket is the primary realtime protocol
+
+* Websocket is the primary realtime protocol
+
+# protobuf 为唯一协议格式
+
+* Use protobuf as the primary protocol format
 
 # 处理断线恢复
-- Handle reconnect and session recovery properly
+
+* Handle reconnect and session recovery properly
 
 # 禁止硬编码协议处理
-- Avoid hardcoded protocol handling
 
+* Avoid hardcoded protocol handling
+
+# 避免高频状态同步
+
+* Avoid unnecessary high-frequency synchronization
+
+## Protobuf
+
+# 后端拥有协议定义权
+
+* The backend owns protobuf definitions
+
+# 所有协议修改必须来自 proto 仓库
+
+* All protocol evolution must originate from the proto repository
+
+# 保持 protobuf 向后兼容
+
+* Keep protobuf backward-compatible
+
+# 禁止 giant payload
+
+* Avoid giant universal payload messages
+
+# 保持协议显式清晰
+
+* Keep protocol messages explicit and readable
+
+# 避免过度嵌套结构
+
+* Avoid deeply nested protocol structures
 
 ## Code Style
 
 # 函数保持小而清晰
-- Keep functions small and readable
+
+* Keep functions small and readable
 
 # 显式逻辑优先
-- Prefer explicit logic over magic abstractions
+
+* Prefer explicit logic over magic abstractions
 
 # 正确使用 context.Context
-- Use context.Context correctly
+
+* Use context.Context correctly
 
 # 显式错误处理
-- Handle errors explicitly
+
+* Handle errors explicitly
 
 # 避免滥用 goroutine
-- Avoid unnecessary goroutines
+
+* Avoid unnecessary goroutines
 
 # 避免过度设计
-- Avoid over-engineering
 
+* Avoid over-engineering
+
+# 优先可读性
+
+* Prioritize readability over cleverness
 
 ## Testing
 
 # 核心玩法增加单测
-- Add unit tests for important gameplay logic when possible
+
+* Add unit tests for important gameplay logic when appropriate
 
 # 完成任务前确保可编译
-- Ensure code compiles before task completion
+
+* Ensure code compiles before task completion
 
 # 未要求时避免 fake/mock
-- Avoid fake/mock implementations unless requested
 
+* Avoid fake/mock implementations unless requested
+
+## AI Collaboration
+
+# 优先渐进式开发
+
+* Prefer incremental implementation steps
+
+# 一次只实现一个明确模块
+
+* Implement one focused module at a time
+
+# 避免一次生成整个系统
+
+* Avoid generating entire large systems at once
+
+# 优先稳定模式
+
+* Prefer stable and repeatable patterns
+
+# 保持代码 AI 可维护
+
+* Keep code easy for future AI agents to understand
 
 ## Restrictions
 
 # 禁止修改客户端目录
-- Do not modify client directory
+
+* Do not modify client directory
 
 # 未批准禁止修改项目结构
-- Do not change project structure without approval
+
+* Do not change project structure without approval
 
 # 禁止引入无必要依赖
-- Do not introduce unnecessary dependencies
+
+* Do not introduce unnecessary dependencies
 
 # 禁止重写无关系统
-- Do not rewrite unrelated systems
 
-# 禁止提前微服务化
-- Do not introduce microservices or distributed systems prematurely
+* Do not rewrite unrelated systems
 
-- The backend owns protobuf definitions
-- All protocol evolution must originate from game-proto
-- Keep protobuf backward-compatible
+# 禁止提前复杂化基础设施
+
+* Avoid premature infrastructure complexity
+
+# 禁止引入 Kubernetes / Service Mesh
+
+* Do not introduce Kubernetes or service mesh during MVP
+
+# 禁止企业级架构模式
+
+* Avoid enterprise-scale architecture patterns during MVP
