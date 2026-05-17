@@ -183,3 +183,7 @@ alwaysApply: true
 
 # 禁止提前微服务化
 - Do not introduce microservices or distributed systems prematurely
+
+- The backend owns protobuf definitions
+- All protocol evolution must originate from game-proto
+- Keep protobuf backward-compatible
