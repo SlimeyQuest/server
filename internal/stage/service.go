@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 
+	equipmentv1 "github.com/slimeyquest/proto/gen/go/equipment"
 	rewardv1 "github.com/slimeyquest/proto/gen/go/reward"
 	stagev1 "github.com/slimeyquest/proto/gen/go/stage"
 	"github.com/slimeyquest/server/internal/gameplayconfig"
@@ -106,6 +107,7 @@ func (s *Service) PushStage(ctx context.Context, playerID int64, targetStageInde
 
 	firstClear := challengeFlat > state.HighestStageCleared
 	var milestoneBundle *rewardv1.RewardBundle
+	var boxReward *equipmentv1.StageBoxReward
 	if firstClear {
 		goldReward := row.FirstClearGold
 		if goldReward > 0 {
@@ -124,6 +126,13 @@ func (s *Service) PushStage(ctx context.Context, playerID int64, targetStageInde
 			state.AdventureID, state.StageIndex = FromFlatStage(nextFlat)
 		} else {
 			state.AdventureID, state.StageIndex = FromFlatStage(30)
+		}
+
+		boxCount := s.stageBoxCount(playerID, challengeFlat)
+		state.AddBoxes(boxCount)
+		boxReward = &equipmentv1.StageBoxReward{
+			BoxCount:      boxCount,
+			TotalBoxCount: state.BoxCount(),
 		}
 
 		if gameplayconfig.IsMilestone(challengeFlat) && row.MilestoneGold > 0 && !state.HasClearedMilestone(challengeFlat) {
@@ -156,5 +165,20 @@ func (s *Service) PushStage(ctx context.Context, playerID int64, targetStageInde
 		Success:         true,
 		StageState:      s.BuildStageState(state),
 		MilestoneReward: milestoneBundle,
+		BoxReward:       boxReward,
 	}, nil
+}
+
+func (s *Service) stageBoxCount(playerID int64, flat int32) int32 {
+	cfg := s.cfg.ClosedLoop
+	min := cfg.StageBoxMin
+	max := cfg.StageBoxMax
+	if min <= 0 {
+		min = 1
+	}
+	if max < min {
+		max = min
+	}
+	rangeSize := max - min + 1
+	return min + int32((playerID+int64(flat))%int64(rangeSize))
 }

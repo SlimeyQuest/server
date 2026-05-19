@@ -95,6 +95,20 @@ func (r *Repository) RecordLogin(ctx context.Context, playerID int) (*ent.Player
 	return p, nil
 }
 
+// SaveRole persists role identity fields from ProgressState.
+func (r *Repository) SaveRole(ctx context.Context, state *ProgressState) error {
+	if state == nil {
+		return fmt.Errorf("save role: nil state")
+	}
+	if _, err := r.client.Player.UpdateOneID(int(state.PlayerID)).
+		SetNickname(state.DisplayName).
+		SetLevel(state.Level).
+		Save(ctx); err != nil {
+		return fmt.Errorf("save player role: %w", err)
+	}
+	return nil
+}
+
 // SaveProgress persists gameplay fields from ProgressState.
 func (r *Repository) SaveProgress(ctx context.Context, state *ProgressState) error {
 	if state == nil {
@@ -103,6 +117,8 @@ func (r *Repository) SaveProgress(ctx context.Context, state *ProgressState) err
 	upd := r.client.Player.UpdateOneID(int(state.PlayerID)).
 		SetGold(state.Gold).
 		SetGems(state.Gems).
+		SetLevel(state.Level).
+		SetExp(state.Exp).
 		SetAdventureID(state.AdventureID).
 		SetStageIndex(state.StageIndex).
 		SetHighestStageCleared(state.HighestStageCleared).

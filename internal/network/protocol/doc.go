@@ -9,10 +9,11 @@
 //
 //	github.com/slimeyquest/proto/gen/go/...
 //
-// When Go codegen is enabled from the proto repository (buf generate), add to server go.mod:
+// Pin a released proto version in server go.mod:
 //
-//	require github.com/slimeyquest/proto v0.0.0
-//	replace github.com/slimeyquest/proto => ../proto
+//	require github.com/slimeyquest/proto v0.1.0
 //
-// Workflow: see ../proto/README.md and server Makefile targets proto-lint / proto-gen.
+// Upgrade: go get github.com/slimeyquest/proto@vX.Y.Z
+//
+// Workflow: see github.com/slimeyquest/proto README and server Makefile targets proto-lint / proto-gen.
 package protocol

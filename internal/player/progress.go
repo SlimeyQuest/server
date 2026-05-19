@@ -26,6 +26,46 @@ type ProgressState struct {
 	ClearedMilestones   []int32
 }
 
+// ChestLevel returns the fixed opener area's MVP upgrade level.
+func (s *ProgressState) ChestLevel() int32 {
+	if s.Level <= 0 {
+		return 1
+	}
+	return s.Level
+}
+
+// SetChestLevel stores the fixed opener area's MVP upgrade level.
+func (s *ProgressState) SetChestLevel(level int32) {
+	if level <= 0 {
+		level = 1
+	}
+	s.Level = level
+}
+
+// BoxCount returns unopened stage boxes stored in the bottom opener area.
+func (s *ProgressState) BoxCount() int32 {
+	if s.Exp <= 0 {
+		return 0
+	}
+	return int32(s.Exp)
+}
+
+// SetBoxCount stores unopened stage boxes in the MVP temporary exp field.
+func (s *ProgressState) SetBoxCount(count int32) {
+	if count < 0 {
+		count = 0
+	}
+	s.Exp = int64(count)
+}
+
+// AddBoxes increases unopened stage boxes.
+func (s *ProgressState) AddBoxes(count int32) {
+	if count <= 0 {
+		return
+	}
+	s.SetBoxCount(s.BoxCount() + count)
+}
+
 // FromEntity maps ent Player into ProgressState.
 func FromEntity(p *ent.Player) *ProgressState {
 	state := &ProgressState{

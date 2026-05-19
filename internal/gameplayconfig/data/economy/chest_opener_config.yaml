@@ -1,0 +1,12 @@
+stage_box_min: 1
+stage_box_max: 2
+opener_upgrade_base_gold: 100
+opener_upgrade_growth_pct: 20
+opener_max_level: 100
+equipment_attack_per_opener_level: 5
+equipment_hp_per_opener_level: 10
+rarity_boost_every_levels: 5
+decompose_base_gold: 20
+decompose_level_gold: 5
+skill_shop_draws_per_level: 10
+companion_shop_draws_per_level: 10

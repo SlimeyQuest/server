@@ -1,0 +1,35 @@
+name: Server CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  server:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout server
+        uses: actions/checkout@v4
+        with:
+          path: server
+
+      - name: Checkout proto dependency
+        uses: actions/checkout@v4
+        with:
+          repository: slimeyquest/proto
+          path: proto
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: server/go.mod
+
+      - name: Build
+        working-directory: server
+        run: go build ./...
+
+      - name: Test
+        working-directory: server
+        run: go test ./...

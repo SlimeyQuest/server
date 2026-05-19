@@ -67,8 +67,9 @@ func New(ctx context.Context, cfg *config.Config, log *slog.Logger) (*App, error
 	rewardSvc := reward.NewService(log.With("component", "reward"), gameplayCfg, playerRepo)
 	idleSvc := idle.NewService(log.With("component", "idle"), gameplayCfg, playerRepo, rewardSvc)
 	stageSvc := stage.NewService(log.With("component", "stage"), gameplayCfg, playerRepo, rewardSvc)
+	loopSvc := player.NewClosedLoopService(playerRepo)
 	loginSvc := login.NewService(log.With("component", "login"), playerRepo, sessionMgr, idleSvc, stageSvc)
-	gameplayHandler := network.NewGameplay(idleSvc, stageSvc, sessionMgr)
+	gameplayHandler := network.NewGameplay(idleSvc, stageSvc, loopSvc, sessionMgr)
 	hub := network.NewHub(log.With("component", "hub"), sessionMgr)
 	server := network.NewServer(cfg, log.With("component", "http"), hub, loginSvc, gameplayHandler)
 

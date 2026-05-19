@@ -61,19 +61,27 @@ pkg/                        Reserved for future shared public packages (empty)
 
 ## Protobuf
 
-Definitions live in the sibling `../proto` repository. Generated Go code will target `github.com/slimeyquest/proto/gen/go/...`.
+Definitions live in the sibling `../proto` repository. Generated Go packages import as:
 
-```bash
-make proto-lint   # lint protos
-make proto-gen    # generate Go (requires buf.gen.yaml in ../proto)
+```go
+import gatewayv1 "github.com/slimeyquest/proto/gen/go/gateway"
 ```
 
-When generated code exists, add to `go.mod`:
+`go.mod` uses a local replace (no separate `gen/go/go.mod`):
 
 ```
-require github.com/slimeyquest/proto v0.0.0
+require github.com/slimeyquest/proto v0.0.0-00010101000000-000000000000
 replace github.com/slimeyquest/proto => ../proto
 ```
+
+Regenerate after proto changes:
+
+```bash
+make proto-gen    # delegates to ../proto Makefile (Go + TS)
+go build ./...
+```
+
+Full client sync: `../tools/scripts/sync-proto.sh`.
 
 See [internal/network/protocol/doc.go](internal/network/protocol/doc.go) for the wire-layer boundary.
 

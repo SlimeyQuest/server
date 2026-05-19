@@ -10,7 +10,7 @@ vet:
 	go vet ./...
 
 proto-lint:
-	cd ../proto && buf lint
+	$(MAKE) -C ../proto proto-lint
 
 proto-gen:
-	cd ../proto && buf generate
+	$(MAKE) -C ../proto proto-gen

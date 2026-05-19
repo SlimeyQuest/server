@@ -9,11 +9,9 @@ require (
 	github.com/jackc/pgx/v5 v5.9.2
 	github.com/mattn/go-sqlite3 v1.14.28
 	github.com/redis/go-redis/v9 v9.19.0
-	github.com/slimeyquest/proto v0.0.0-00010101000000-000000000000
+	github.com/slimeyquest/proto v0.1.0
 	google.golang.org/protobuf v1.36.11
 )
-
-replace github.com/slimeyquest/proto => ../proto
 
 require (
 	ariga.io/atlas v0.36.2-0.20250730182955-2c6300d0a3e1 // indirect
@@ -37,3 +35,5 @@ require (
 	golang.org/x/text v0.29.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/slimeyquest/proto => ../proto

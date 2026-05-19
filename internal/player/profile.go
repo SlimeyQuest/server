@@ -22,6 +22,14 @@ func ToProfile(state *ProgressState, cfg *gameplayconfig.Config) *playerv1.Playe
 		EquippedSlots:       state.Equipment.EquippedSlots(),
 		CreatedAtMs:         state.CreatedAt.UnixMilli(),
 		LastLoginAtMs:       lastLoginAtMs(state),
+		HeroClass:           playerv1.HeroClass_HERO_CLASS_WARRIOR,
+		HeroLevel:           state.Level,
+		ZoneId:              TestZoneID,
+		ProfessionSkill:     &playerv1.SkillInfo{SkillId: 1, Name: "Warrior Strike", Quality: 1},
+		EquippedSkills:      []*playerv1.SkillInfo{},
+		Companions:          []*playerv1.CompanionInfo{},
+		ChestLevel:          state.ChestLevel(),
+		BoxCount:            state.BoxCount(),
 	}
 }
 

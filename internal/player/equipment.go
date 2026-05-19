@@ -124,9 +124,16 @@ func (d *EquipmentData) AddInstance(row gameplayconfig.DropRow) EquipmentInstanc
 // EquippedSlots returns protobuf equipped slot entries.
 func (d *EquipmentData) EquippedSlots() []*equipmentv1.EquippedSlot {
 	slots := []equipmentv1.EquipmentSlot{
+		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_HAT,
+		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_SHOE_LEFT,
+		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_SHOE_RIGHT,
+		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_GLOVE_LEFT,
+		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_GLOVE_RIGHT,
+		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_CLOTH,
+		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_PANTS,
 		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_WEAPON,
-		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_ARMOR,
-		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_RING,
+		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_RING_LEFT,
+		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_RING_RIGHT,
 	}
 	out := make([]*equipmentv1.EquippedSlot, 0, len(slots))
 	for _, slot := range slots {

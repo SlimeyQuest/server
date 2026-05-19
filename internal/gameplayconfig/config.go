@@ -7,33 +7,53 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 //go:embed data/idle/idle_globals.json
 //go:embed data/idle/idle_gold_per_sec.csv
 //go:embed data/stages/stages.csv
 //go:embed data/economy/drop_table_idle.csv
+//go:embed data/economy/chest_opener_config.yaml
 var embeddedFS embed.FS
 
 // Config holds gameplay balance tables loaded at startup.
 type Config struct {
-	Globals      Globals
+	Globals           Globals
+	ClosedLoop        ClosedLoopConfig
 	GoldPerSecByStage map[int32]float64
-	Stages       map[int32]StageRow
-	IdleDrops    []DropRow
-	StarterWeapon DropRow
+	Stages            map[int32]StageRow
+	IdleDrops         []DropRow
+	StarterWeapon     DropRow
 }
 
 // Globals are idle and combat tuning parameters.
 type Globals struct {
-	OfflineCapHours         float64 `json:"offline_cap_hours"`
-	BaseOfflineRate         float64 `json:"base_offline_rate"`
-	EquipRollIntervalSec    int64   `json:"equip_roll_interval_sec"`
-	MaxEquipRollsPerClaim   int64   `json:"max_equip_rolls_per_claim"`
-	OnlineMultiplier        float64 `json:"online_multiplier"`
-	ClearThreshold          float64 `json:"clear_threshold"`
-	KArmor                  float64 `json:"k_armor"`
-	IdleScalePerStage       float64 `json:"idle_scale_per_stage"`
+	OfflineCapHours      float64 `json:"offline_cap_hours"`
+	BaseOfflineRate      float64 `json:"base_offline_rate"`
+	EquipRollIntervalSec int64   `json:"equip_roll_interval_sec"`
+	MaxEquipRollsPerClaim int64  `json:"max_equip_rolls_per_claim"`
+	OnlineMultiplier     float64 `json:"online_multiplier"`
+	ClearThreshold       float64 `json:"clear_threshold"`
+	KArmor               float64 `json:"k_armor"`
+	IdleScalePerStage    float64 `json:"idle_scale_per_stage"`
+}
+
+// ClosedLoopConfig contains fixed values for boxes, opener upgrades and MVP draws.
+type ClosedLoopConfig struct {
+	StageBoxMin            int32   `json:"stage_box_min"`
+	StageBoxMax            int32   `json:"stage_box_max"`
+	OpenerUpgradeBaseGold  int64   `json:"opener_upgrade_base_gold"`
+	OpenerUpgradeGrowthPct int32   `json:"opener_upgrade_growth_pct"`
+	OpenerMaxLevel         int32   `json:"opener_max_level"`
+	EquipmentAttackPerLevel int64  `json:"equipment_attack_per_opener_level"`
+	EquipmentHPPerLevel     int64  `json:"equipment_hp_per_opener_level"`
+	RarityBoostEveryLevels  int32  `json:"rarity_boost_every_levels"`
+	DecomposeBaseGold       int64  `json:"decompose_base_gold"`
+	DecomposeLevelGold      int64  `json:"decompose_level_gold"`
+	SkillShopDrawsPerLevel  int32  `json:"skill_shop_draws_per_level"`
+	CompanionShopDrawsPerLevel int32 `json:"companion_shop_draws_per_level"`
 }
 
 // StageRow is one flat stage definition.
@@ -77,15 +97,20 @@ func Load() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+	closedLoop, err := loadClosedLoop()
+	if err != nil {
+		return nil, err
+	}
 	if len(drops) == 0 {
 		return nil, fmt.Errorf("idle drop table is empty")
 	}
 	return &Config{
-		Globals:       globals,
+		Globals:           globals,
+		ClosedLoop:        closedLoop,
 		GoldPerSecByStage: goldPerSec,
-		Stages:        stages,
-		IdleDrops:     drops,
-		StarterWeapon: drops[0],
+		Stages:            stages,
+		IdleDrops:         drops,
+		StarterWeapon:     drops[0],
 	}, nil
 }
 
@@ -99,6 +124,18 @@ func loadGlobals() (Globals, error) {
 		return Globals{}, err
 	}
 	return g, nil
+}
+
+func loadClosedLoop() (ClosedLoopConfig, error) {
+	raw, err := embeddedFS.ReadFile("data/economy/chest_opener_config.yaml")
+	if err != nil {
+		return ClosedLoopConfig{}, err
+	}
+	var cfg ClosedLoopConfig
+	if err := yaml.Unmarshal(raw, &cfg); err != nil {
+		return ClosedLoopConfig{}, err
+	}
+	return cfg, nil
 }
 
 func loadGoldPerSec() (map[int32]float64, error) {
