@@ -112,3 +112,37 @@ func TestGuestLoginRejectsEmptyDeviceID(t *testing.T) {
 		t.Fatalf("unexpected error code: %v", res.GetError().GetCode())
 	}
 }
+
+func TestPhoneAuthCreatesSessionAndRejectsInvalidCode(t *testing.T) {
+	client := enttest.Open(t, dialect.SQLite, "file:phone?mode=memory&cache=shared&_fk=1")
+	defer client.Close()
+
+	svc := newTestLoginService(t, client)
+	ctx := context.Background()
+
+	bad := svc.PhoneRegister(ctx, &fakeConn{id: "bad"}, &loginv1.PhoneRegisterReq{Phone: "13800000000", VerifyCode: "999999"})
+	if bad.GetError().GetCode() != commonv1.ErrorCode_ERROR_CODE_INVALID_REQUEST {
+		t.Fatalf("expected invalid code rejection, got %v", bad.GetError().GetCode())
+	}
+
+	conn := &fakeConn{id: "phone-1"}
+	res := svc.PhoneRegister(ctx, conn, &loginv1.PhoneRegisterReq{Phone: "13800000000", VerifyCode: "000000"})
+	if res.GetError().GetCode() != commonv1.ErrorCode_ERROR_CODE_OK {
+		t.Fatalf("expected phone register success, got %#v", res.GetError())
+	}
+	if res.GetPlayerId() == 0 || res.GetSessionToken() == "" || conn.token == "" {
+		t.Fatal("expected player id and session token")
+	}
+
+	loginConn := &fakeConn{id: "phone-2"}
+	loginRes := svc.PhoneLogin(ctx, loginConn, &loginv1.PhoneLoginReq{Phone: "13800000000", VerifyCode: "123456"})
+	if loginRes.GetError().GetCode() != commonv1.ErrorCode_ERROR_CODE_OK {
+		t.Fatalf("expected phone login success, got %#v", loginRes.GetError())
+	}
+	if loginRes.GetPlayerId() != res.GetPlayerId() {
+		t.Fatalf("expected same player id, got %d and %d", loginRes.GetPlayerId(), res.GetPlayerId())
+	}
+	if !conn.closed {
+		t.Fatal("expected previous phone connection to be replaced")
+	}
+}

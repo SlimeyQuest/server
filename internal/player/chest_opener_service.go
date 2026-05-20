@@ -13,24 +13,32 @@ import (
 )
 
 const (
-	TestZoneID          int32 = 1
-	DefaultChestLevel  int32 = 1
-	SkillShopLevelBase int32 = 1
-	CompanionShopLevelBase int32 = 1
+	TestZoneID              int32 = 1
+	DefaultChestLevel       int32 = 1
+	SkillShopLevelBase      int32 = 1
+	CompanionShopLevelBase  int32 = 1
 )
 
-// ClosedLoopService implements the MVP chest/equipment/skill/companion loop.
-type ClosedLoopService struct {
+// ChestOpenerService implements the MVP chest/equipment/skill/companion loop.
+type ChestOpenerService struct {
 	players *Repository
 }
 
+// NewChestOpenerService creates a gameplay loop service.
+func NewChestOpenerService(players *Repository) *ChestOpenerService {
+	return &ChestOpenerService{players: players}
+}
+
+// ClosedLoopService is kept as a compatibility alias for older wiring code.
+type ClosedLoopService = ChestOpenerService
+
 // NewClosedLoopService creates a gameplay loop service.
 func NewClosedLoopService(players *Repository) *ClosedLoopService {
-	return &ClosedLoopService{players: players}
+	return NewChestOpenerService(players)
 }
 
 // CreateRole updates the display name and returns the current role profile.
-func (s *ClosedLoopService) CreateRole(ctx context.Context, playerID int64, displayName string) (*playerv1.CreateRoleRes, error) {
+func (s *ChestOpenerService) CreateRole(ctx context.Context, playerID int64, displayName string) (*playerv1.CreateRoleRes, error) {
 	state, err := s.players.LoadProgress(ctx, playerID)
 	if err != nil {
 		return nil, err

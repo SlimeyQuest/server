@@ -42,18 +42,18 @@ type Globals struct {
 
 // ClosedLoopConfig contains fixed values for boxes, opener upgrades and MVP draws.
 type ClosedLoopConfig struct {
-	StageBoxMin            int32   `json:"stage_box_min"`
-	StageBoxMax            int32   `json:"stage_box_max"`
-	OpenerUpgradeBaseGold  int64   `json:"opener_upgrade_base_gold"`
-	OpenerUpgradeGrowthPct int32   `json:"opener_upgrade_growth_pct"`
-	OpenerMaxLevel         int32   `json:"opener_max_level"`
-	EquipmentAttackPerLevel int64  `json:"equipment_attack_per_opener_level"`
-	EquipmentHPPerLevel     int64  `json:"equipment_hp_per_opener_level"`
-	RarityBoostEveryLevels  int32  `json:"rarity_boost_every_levels"`
-	DecomposeBaseGold       int64  `json:"decompose_base_gold"`
-	DecomposeLevelGold      int64  `json:"decompose_level_gold"`
-	SkillShopDrawsPerLevel  int32  `json:"skill_shop_draws_per_level"`
-	CompanionShopDrawsPerLevel int32 `json:"companion_shop_draws_per_level"`
+	StageBoxMin                int32 `json:"stage_box_min" yaml:"stage_box_min"`
+	StageBoxMax                int32 `json:"stage_box_max" yaml:"stage_box_max"`
+	OpenerUpgradeBaseGold      int64 `json:"opener_upgrade_base_gold" yaml:"opener_upgrade_base_gold"`
+	OpenerUpgradeGrowthPct     int32 `json:"opener_upgrade_growth_pct" yaml:"opener_upgrade_growth_pct"`
+	OpenerMaxLevel             int32 `json:"opener_max_level" yaml:"opener_max_level"`
+	EquipmentAttackPerLevel    int64 `json:"equipment_attack_per_opener_level" yaml:"equipment_attack_per_opener_level"`
+	EquipmentHPPerLevel        int64 `json:"equipment_hp_per_opener_level" yaml:"equipment_hp_per_opener_level"`
+	RarityBoostEveryLevels     int32 `json:"rarity_boost_every_levels" yaml:"rarity_boost_every_levels"`
+	DecomposeBaseGold          int64 `json:"decompose_base_gold" yaml:"decompose_base_gold"`
+	DecomposeLevelGold         int64 `json:"decompose_level_gold" yaml:"decompose_level_gold"`
+	SkillShopDrawsPerLevel     int32 `json:"skill_shop_draws_per_level" yaml:"skill_shop_draws_per_level"`
+	CompanionShopDrawsPerLevel int32 `json:"companion_shop_draws_per_level" yaml:"companion_shop_draws_per_level"`
 }
 
 // StageRow is one flat stage definition.

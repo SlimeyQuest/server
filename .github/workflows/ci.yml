@@ -1,4 +1,4 @@
-name: Server CI
+name: Go CI
 
 on:
   push:
@@ -6,30 +6,53 @@ on:
   pull_request:
     branches: [main, master]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GOPRIVATE: github.com/slimeyquest/*
+  GONOSUMDB: github.com/slimeyquest/*
+  GOPROXY: direct
+
 jobs:
-  server:
+  test:
+    name: Build and Test
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
     steps:
-      - name: Checkout server
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          path: server
 
-      - name: Checkout proto dependency
-        uses: actions/checkout@v4
-        with:
-          repository: slimeyquest/proto
-          path: proto
+      - name: Configure private Go module access
+        run: git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
 
-      - name: Setup Go
+      - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: server/go.mod
+          go-version-file: go.mod
+          cache: true
 
-      - name: Build
-        working-directory: server
+      - name: Download modules
+        run: go mod download
+
+      - name: Verify module graph is tidy
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum
+
+      - name: Verify generated Ent code is committed
+        run: git diff --exit-code ent/
+
+      - name: Build all packages
         run: go build ./...
 
-      - name: Test
-        working-directory: server
-        run: go test ./...
+      - name: Run tests
+        run: go test -race -covermode=atomic -coverprofile=coverage.out ./...
+
+      - name: Check coverage profile
+        run: go tool cover -func=coverage.out

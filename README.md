@@ -67,14 +67,11 @@ Definitions live in the sibling `../proto` repository. Generated Go packages imp
 import gatewayv1 "github.com/slimeyquest/proto/gen/go/gateway"
 ```
 
-`go.mod` uses a local replace (no separate `gen/go/go.mod`):
+`go.mod` depends on the released `github.com/slimeyquest/proto` module. Do not commit a local `replace` for proto in this repository; use a Go workspace locally if you need to develop server and proto side by side.
 
-```
-require github.com/slimeyquest/proto v0.0.0-00010101000000-000000000000
-replace github.com/slimeyquest/proto => ../proto
-```
+For private module downloads in CI, configure `GOPRIVATE=github.com/slimeyquest/*` and provide a GitHub token with read access to the proto repository.
 
-Regenerate after proto changes:
+Regenerate after proto changes in the proto repository:
 
 ```bash
 make proto-gen    # delegates to ../proto Makefile (Go + TS)
