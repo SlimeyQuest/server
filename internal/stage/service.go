@@ -171,8 +171,8 @@ func (s *Service) PushStage(ctx context.Context, playerID int64, targetStageInde
 
 func (s *Service) stageBoxCount(playerID int64, flat int32) int32 {
 	cfg := s.cfg.ClosedLoop
-	min := cfg.StageBoxMin
-	max := cfg.StageBoxMax
+	min := cfg.StageBoxMinValue()
+	max := cfg.StageBoxMaxValue()
 	if min <= 0 {
 		min = 1
 	}

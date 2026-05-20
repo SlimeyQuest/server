@@ -1,12 +1,61 @@
-stage_box_min: 1
-stage_box_max: 2
-opener_upgrade_base_gold: 100
-opener_upgrade_growth_pct: 20
-opener_max_level: 100
-equipment_attack_per_opener_level: 5
-equipment_hp_per_opener_level: 10
-rarity_boost_every_levels: 5
-decompose_base_gold: 20
-decompose_level_gold: 5
-skill_shop_draws_per_level: 10
-companion_shop_draws_per_level: 10
+closed_loop:
+  stage:
+    # 开箱区每关掉落箱子最小值
+    box_min: 1
+    # 开箱区每关掉落箱子最大值
+    box_max: 2
+    # 开箱升级基础金币消耗
+    opener_base_gold: 100
+    # 开箱升级每级成长百分比
+    opener_growth_pct: 20
+    # 开箱区域最高等级
+    max_level: 28
+    # 每级开箱额外攻击加成
+    attack_per_level: 5
+    # 每级开箱额外生命加成
+    hp_per_level: 10
+    # 每隔多少级推进一次品质带解锁
+    rarity_boost_every: 4
+  chest:
+    # 开箱区品质序列：白、绿、蓝、紫、橙、金、红、彩
+    rarities: [1, 2, 3, 4, 5, 6, 7, 8]
+    # 开箱区初始开放品质数量
+    initial_rarities: 3
+    # 开箱区同时存在概率的最大品质数量
+    max_active_rarities: 4
+    # 开箱区每隔多少级开放一个新高品质
+    unlock_interval: 4
+    # 新开放最高品质的基础低概率
+    lowest_base_weight: 8
+    # 相邻低品质相对高品质的基础概率差距百分比
+    adjacent_gap_pct: 60
+    # 每级从低品质转移到高品质的概率百分比
+    progress_shift_pct: 3
+    # 彩品质概率上限百分比
+    top_weight_cap_pct: 8
+  shop:
+    # 技能/同伴商店品质序列：白、蓝、紫、红、彩
+    rarities: [1, 2, 3, 4, 5]
+    # 技能/同伴商店初始开放品质数量
+    initial_rarities: 1
+    # 技能/同伴商店同时存在概率的最大品质数量
+    max_active_rarities: 5
+    # 技能/同伴商店每隔多少级开放一个新高品质
+    unlock_interval: 4
+    # 新开放最高品质的基础低概率
+    lowest_base_weight: 5
+    # 相邻低品质相对高品质的基础概率差距百分比
+    adjacent_gap_pct: 60
+    # 每级从低品质转移到高品质的概率百分比
+    progress_shift_pct: 2
+    # 彩品质概率上限百分比
+    top_weight_cap_pct: 5
+  economy:
+    # 分解基础金币
+    decompose_base_gold: 20
+    # 分解每级金币
+    decompose_level_gold: 5
+    # 技能商店每升一级对应抽取次数
+    skill_draws_per_level: 10
+    # 同伴商店每升一级对应抽取次数
+    companion_draws_per_level: 10

@@ -42,19 +42,77 @@ type Globals struct {
 
 // ClosedLoopConfig contains fixed values for boxes, opener upgrades and MVP draws.
 type ClosedLoopConfig struct {
-	StageBoxMin                int32 `json:"stage_box_min" yaml:"stage_box_min"`
-	StageBoxMax                int32 `json:"stage_box_max" yaml:"stage_box_max"`
-	OpenerUpgradeBaseGold      int64 `json:"opener_upgrade_base_gold" yaml:"opener_upgrade_base_gold"`
-	OpenerUpgradeGrowthPct     int32 `json:"opener_upgrade_growth_pct" yaml:"opener_upgrade_growth_pct"`
-	OpenerMaxLevel             int32 `json:"opener_max_level" yaml:"opener_max_level"`
-	EquipmentAttackPerLevel    int64 `json:"equipment_attack_per_opener_level" yaml:"equipment_attack_per_opener_level"`
-	EquipmentHPPerLevel        int64 `json:"equipment_hp_per_opener_level" yaml:"equipment_hp_per_opener_level"`
-	RarityBoostEveryLevels     int32 `json:"rarity_boost_every_levels" yaml:"rarity_boost_every_levels"`
-	DecomposeBaseGold          int64 `json:"decompose_base_gold" yaml:"decompose_base_gold"`
-	DecomposeLevelGold         int64 `json:"decompose_level_gold" yaml:"decompose_level_gold"`
-	SkillShopDrawsPerLevel     int32 `json:"skill_shop_draws_per_level" yaml:"skill_shop_draws_per_level"`
-	CompanionShopDrawsPerLevel int32 `json:"companion_shop_draws_per_level" yaml:"companion_shop_draws_per_level"`
+	StageBoxMin                int32 `yaml:"-"`
+	StageBoxMax                int32 `yaml:"-"`
+	OpenerUpgradeBaseGold      int64 `yaml:"-"`
+	OpenerUpgradeGrowthPct     int32 `yaml:"-"`
+	OpenerMaxLevel             int32 `yaml:"-"`
+	EquipmentAttackPerLevel    int64 `yaml:"-"`
+	EquipmentHPPerLevel        int64 `yaml:"-"`
+	RarityBoostEveryLevels     int32 `yaml:"-"`
+	ChestRarityWeights         []int32 `yaml:"-"`
+	ChestRarityUnlockLevels    []int32 `yaml:"-"`
+	ShopRarityWeights          []int32 `yaml:"-"`
+	ShopRarityUnlockLevels     []int32 `yaml:"-"`
+	DecomposeBaseGold          int64 `yaml:"-"`
+	DecomposeLevelGold         int64 `yaml:"-"`
+	SkillShopDrawsPerLevel     int32 `yaml:"-"`
+	CompanionShopDrawsPerLevel int32 `yaml:"-"`
+
+	Stage   ClosedLoopStageConfig   `yaml:"stage"`
+	Chest   ClosedLoopChestConfig   `yaml:"chest"`
+	Shop    ClosedLoopShopConfig    `yaml:"shop"`
+	Economy ClosedLoopEconomyConfig `yaml:"economy"`
 }
+
+type ClosedLoopStageConfig struct {
+	BoxMin          int32 `yaml:"box_min"`
+	BoxMax          int32 `yaml:"box_max"`
+	OpenerBaseGold  int64 `yaml:"opener_base_gold"`
+	OpenerGrowthPct int32 `yaml:"opener_growth_pct"`
+	MaxLevel        int32 `yaml:"max_level"`
+	AttackPerLevel  int64 `yaml:"attack_per_level"`
+	HPPerLevel      int64 `yaml:"hp_per_level"`
+	RarityBoostEvery int32 `yaml:"rarity_boost_every"`
+}
+
+type ClosedLoopChestConfig struct {
+	Rarities         []int32 `yaml:"rarities"`
+	InitialRarities  int32   `yaml:"initial_rarities"`
+	MaxActiveRarities int32  `yaml:"max_active_rarities"`
+	UnlockInterval   int32   `yaml:"unlock_interval"`
+	LowestBaseWeight int32   `yaml:"lowest_base_weight"`
+	AdjacentGapPct   int32   `yaml:"adjacent_gap_pct"`
+	ProgressShiftPct int32   `yaml:"progress_shift_pct"`
+	TopWeightCapPct  int32   `yaml:"top_weight_cap_pct"`
+}
+
+type ClosedLoopShopConfig struct {
+	Rarities         []int32 `yaml:"rarities"`
+	InitialRarities  int32   `yaml:"initial_rarities"`
+	MaxActiveRarities int32  `yaml:"max_active_rarities"`
+	UnlockInterval   int32   `yaml:"unlock_interval"`
+	LowestBaseWeight int32   `yaml:"lowest_base_weight"`
+	AdjacentGapPct   int32   `yaml:"adjacent_gap_pct"`
+	ProgressShiftPct int32   `yaml:"progress_shift_pct"`
+	TopWeightCapPct  int32   `yaml:"top_weight_cap_pct"`
+}
+
+type ClosedLoopEconomyConfig struct {
+	DecomposeBaseGold      int64 `yaml:"decompose_base_gold"`
+	DecomposeLevelGold     int64 `yaml:"decompose_level_gold"`
+	SkillDrawsPerLevel     int32 `yaml:"skill_draws_per_level"`
+	CompanionDrawsPerLevel  int32 `yaml:"companion_draws_per_level"`
+}
+
+func (c ClosedLoopConfig) StageBoxMinValue() int32 { return c.StageBoxMin }
+func (c ClosedLoopConfig) StageBoxMaxValue() int32 { return c.StageBoxMax }
+func (c ClosedLoopConfig) OpenerUpgradeBaseGoldValue() int64 { return c.OpenerUpgradeBaseGold }
+func (c ClosedLoopConfig) OpenerUpgradeGrowthPctValue() int32 { return c.OpenerUpgradeGrowthPct }
+func (c ClosedLoopConfig) OpenerMaxLevelValue() int32 { return c.OpenerMaxLevel }
+func (c ClosedLoopConfig) EquipmentAttackPerLevelValue() int64 { return c.EquipmentAttackPerLevel }
+func (c ClosedLoopConfig) EquipmentHPPerLevelValue() int64 { return c.EquipmentHPPerLevel }
+func (c ClosedLoopConfig) RarityBoostEveryLevelsValue() int32 { return c.RarityBoostEveryLevels }
 
 // StageRow is one flat stage definition.
 type StageRow struct {
@@ -131,9 +189,52 @@ func loadClosedLoop() (ClosedLoopConfig, error) {
 	if err != nil {
 		return ClosedLoopConfig{}, err
 	}
-	var cfg ClosedLoopConfig
-	if err := yaml.Unmarshal(raw, &cfg); err != nil {
+	var file struct {
+		ClosedLoop struct {
+			Stage struct {
+				BoxMin          int32   `yaml:"box_min"`
+				BoxMax          int32   `yaml:"box_max"`
+				OpenerBaseGold  int64   `yaml:"opener_base_gold"`
+				OpenerGrowthPct int32   `yaml:"opener_growth_pct"`
+				MaxLevel        int32   `yaml:"max_level"`
+				AttackPerLevel  int64   `yaml:"attack_per_level"`
+				HPPerLevel      int64   `yaml:"hp_per_level"`
+				RarityBoostEvery int32  `yaml:"rarity_boost_every"`
+			} `yaml:"stage"`
+			Chest ClosedLoopChestConfig `yaml:"chest"`
+			Shop ClosedLoopShopConfig `yaml:"shop"`
+			Economy struct {
+				DecomposeBaseGold      int64 `yaml:"decompose_base_gold"`
+				DecomposeLevelGold     int64 `yaml:"decompose_level_gold"`
+				SkillDrawsPerLevel     int32 `yaml:"skill_draws_per_level"`
+				CompanionDrawsPerLevel int32 `yaml:"companion_draws_per_level"`
+			} `yaml:"economy"`
+		} `yaml:"closed_loop"`
+	}
+	if err := yaml.Unmarshal(raw, &file); err != nil {
 		return ClosedLoopConfig{}, err
+	}
+	cfg := ClosedLoopConfig{
+		StageBoxMin:                file.ClosedLoop.Stage.BoxMin,
+		StageBoxMax:                file.ClosedLoop.Stage.BoxMax,
+		OpenerUpgradeBaseGold:      file.ClosedLoop.Stage.OpenerBaseGold,
+		OpenerUpgradeGrowthPct:     file.ClosedLoop.Stage.OpenerGrowthPct,
+		OpenerMaxLevel:             file.ClosedLoop.Stage.MaxLevel,
+		EquipmentAttackPerLevel:    file.ClosedLoop.Stage.AttackPerLevel,
+		EquipmentHPPerLevel:        file.ClosedLoop.Stage.HPPerLevel,
+		RarityBoostEveryLevels:     file.ClosedLoop.Stage.RarityBoostEvery,
+		ChestRarityWeights:         nil,
+		ChestRarityUnlockLevels:    nil,
+		ShopRarityWeights:          nil,
+		ShopRarityUnlockLevels:     nil,
+		DecomposeBaseGold:          file.ClosedLoop.Economy.DecomposeBaseGold,
+		DecomposeLevelGold:         file.ClosedLoop.Economy.DecomposeLevelGold,
+		SkillShopDrawsPerLevel:     file.ClosedLoop.Economy.SkillDrawsPerLevel,
+		CompanionShopDrawsPerLevel: file.ClosedLoop.Economy.CompanionDrawsPerLevel,
+		Stage:                      file.ClosedLoop.Stage,
+		Chest:                      file.ClosedLoop.Chest,
+		Shop:                       file.ClosedLoop.Shop,
+		Economy:                    file.ClosedLoop.Economy,
 	}
 	return cfg, nil
 }

@@ -13,10 +13,15 @@ import (
 )
 
 const (
-	TestZoneID              int32 = 1
-	DefaultChestLevel       int32 = 1
-	SkillShopLevelBase      int32 = 1
-	CompanionShopLevelBase  int32 = 1
+	TestZoneID             int32 = 1
+	DefaultChestLevel      int32 = 1
+	SkillShopLevelBase     int32 = 1
+	CompanionShopLevelBase int32 = 1
+
+	maxChestLevel int32 = 28
+	maxShopLevel  int32 = 20
+	maxChestTiers int32 = 4
+	maxShopTiers  int32 = 5
 )
 
 // ChestOpenerService implements the MVP chest/equipment/skill/companion loop.
@@ -136,6 +141,12 @@ func (s *ClosedLoopService) UpgradeChest(ctx context.Context, playerID int64, ta
 		return nil, err
 	}
 	current := state.ChestLevel()
+	if current <= 0 {
+		current = DefaultChestLevel
+	}
+	if targetLevel > s.players.Cfg().ClosedLoop.OpenerMaxLevelValue() {
+		targetLevel = s.players.Cfg().ClosedLoop.OpenerMaxLevelValue()
+	}
 	if targetLevel <= current {
 		return &equipmentv1.UpgradeChestRes{ChestLevel: current, TotalGold: state.Gold}, nil
 	}
@@ -156,10 +167,11 @@ func (s *ClosedLoopService) DrawSkill(_ context.Context, playerID int64, drawCou
 	if drawCount <= 0 {
 		drawCount = 1
 	}
-	shopLevel := SkillShopLevelBase + drawCount/10
+	cfg := s.players.Cfg().ClosedLoop
+	shopLevel := min32(SkillShopLevelBase+drawCount/s.shopDrawsPerLevel(true), maxShopLevel)
 	rewards := make([]*playerv1.SkillInfo, 0, drawCount)
 	for i := int32(0); i < drawCount; i++ {
-		rewards = append(rewards, testSkill(playerID, i, shopLevel))
+		rewards = append(rewards, testSkill(playerID, i, shopLevel, cfg.Shop))
 	}
 	return &playerv1.DrawSkillRes{Rewards: rewards, ShopLevel: shopLevel}, nil
 }
@@ -169,30 +181,22 @@ func (s *ClosedLoopService) DrawCompanion(_ context.Context, playerID int64, dra
 	if drawCount <= 0 {
 		drawCount = 1
 	}
-	shopLevel := CompanionShopLevelBase + drawCount/10
+	cfg := s.players.Cfg().ClosedLoop
+	shopLevel := min32(CompanionShopLevelBase+drawCount/s.shopDrawsPerLevel(false), maxShopLevel)
 	rewards := make([]*playerv1.CompanionInfo, 0, drawCount)
 	for i := int32(0); i < drawCount; i++ {
-		rewards = append(rewards, testCompanion(playerID, i, shopLevel))
+		rewards = append(rewards, testCompanion(playerID, i, shopLevel, cfg.Shop))
 	}
 	return &playerv1.DrawCompanionRes{Rewards: rewards, ShopLevel: shopLevel}, nil
 }
 
 func (s *ClosedLoopService) pickChestDrop(state *ProgressState, seed int64) gameplayconfig.DropRow {
 	cfg := s.players.Cfg().ClosedLoop
+	level := min32(state.ChestLevel(), s.players.Cfg().ClosedLoop.OpenerMaxLevelValue())
 	row := s.players.Cfg().PickIdleDrop(seed)
-	level := state.ChestLevel()
-	boostEvery := cfg.RarityBoostEveryLevels
-	if boostEvery <= 0 {
-		boostEvery = 5
-	}
-	if level > 1 && row.Rarity < int32(commonv1.EquipmentRarity_EQUIPMENT_RARITY_LEGENDARY) {
-		row.Rarity += (level - 1) / boostEvery
-		if row.Rarity > int32(commonv1.EquipmentRarity_EQUIPMENT_RARITY_LEGENDARY) {
-			row.Rarity = int32(commonv1.EquipmentRarity_EQUIPMENT_RARITY_LEGENDARY)
-		}
-	}
-	row.Attack += int64(level-1) * cfg.EquipmentAttackPerLevel
-	row.HP += int64(level-1) * cfg.EquipmentHPPerLevel
+	row.Rarity = rarityForLevel(level, chestCurve(cfg.Chest), stablePick(seed, level))
+	row.Attack += int64(level-1) * cfg.Stage.AttackPerLevel
+	row.HP += int64(level-1) * cfg.Stage.HPPerLevel
 	row.Slot = normalizeDropSlot(row.Slot, seed)
 	return row
 }
@@ -224,11 +228,11 @@ func normalizeDropSlot(slot int32, seed int64) int32 {
 
 func (s *ClosedLoopService) decomposeGold(inst EquipmentInstance) int64 {
 	cfg := s.players.Cfg().ClosedLoop
-	baseGold := cfg.DecomposeBaseGold
+	baseGold := cfg.Economy.DecomposeBaseGold
 	if baseGold <= 0 {
 		baseGold = 20
 	}
-	levelGold := cfg.DecomposeLevelGold
+	levelGold := cfg.Economy.DecomposeLevelGold
 	if levelGold <= 0 {
 		levelGold = 5
 	}
@@ -241,11 +245,11 @@ func (s *ClosedLoopService) decomposeGold(inst EquipmentInstance) int64 {
 
 func (s *ClosedLoopService) chestUpgradeCost(current, target int32) int64 {
 	cfg := s.players.Cfg().ClosedLoop
-	base := cfg.OpenerUpgradeBaseGold
+	base := cfg.OpenerUpgradeBaseGoldValue()
 	if base <= 0 {
 		base = 100
 	}
-	growthPct := cfg.OpenerUpgradeGrowthPct
+	growthPct := cfg.OpenerUpgradeGrowthPctValue()
 	var total int64
 	cost := base
 	for lv := int32(2); lv <= target; lv++ {
@@ -257,26 +261,191 @@ func (s *ClosedLoopService) chestUpgradeCost(current, target int32) int64 {
 	return total
 }
 
-func testSkill(playerID int64, index int32, shopLevel int32) *playerv1.SkillInfo {
-	quality := int32(1)
-	if shopLevel >= 3 {
-		quality = 2
-	}
+func testSkill(playerID int64, index int32, shopLevel int32, curve gameplayconfig.ClosedLoopShopConfig) *playerv1.SkillInfo {
+	quality := rarityForLevel(shopLevel, shopCurve(curve), stablePick(playerID, index))
 	return &playerv1.SkillInfo{SkillId: 1001, Name: fmt.Sprintf("Warrior Slash %d", stablePick(playerID, index)+1), Quality: quality}
 }
 
-func testCompanion(playerID int64, index int32, shopLevel int32) *playerv1.CompanionInfo {
-	quality := int32(1)
-	if shopLevel >= 3 {
-		quality = 2
-	}
+func testCompanion(playerID int64, index int32, shopLevel int32, curve gameplayconfig.ClosedLoopShopConfig) *playerv1.CompanionInfo {
+	quality := rarityForLevel(shopLevel, shopCurve(curve), stablePick(playerID, index))
 	return &playerv1.CompanionInfo{CompanionId: 2001, Name: fmt.Sprintf("Tiny Slime %d", stablePick(playerID, index)+1), Quality: quality}
 }
 
-func stablePick(playerID int64, index int32) uint32 {
+func stablePick(parts ...any) uint32 {
 	h := fnv.New32a()
-	_, _ = h.Write([]byte(fmt.Sprintf("%d:%d", playerID, index)))
-	return h.Sum32() % 3
+	_, _ = fmt.Fprint(h, parts...)
+	return h.Sum32()
+}
+
+func rarityForLevel(level int32, curve probabilityCurve, seed uint32) int32 {
+	weights, rarities := smoothRarityWeights(level, curve)
+	total := int32(0)
+	for _, w := range weights {
+		total += w
+	}
+	if total <= 0 || len(rarities) == 0 {
+		return 1
+	}
+	roll := int32(seed%uint32(total)) + 1
+	cursor := int32(0)
+	for i, rarity := range rarities {
+		cursor += weights[i]
+		if roll <= cursor {
+			return rarity
+		}
+	}
+	return rarities[len(rarities)-1]
+}
+
+func smoothRarityWeights(level int32, curve probabilityCurve) ([]int32, []int32) {
+	if level <= 0 {
+		level = 1
+	}
+	rarities := curve.rarities
+	if len(rarities) == 0 {
+		rarities = []int32{1}
+	}
+	initial := clamp32(curve.initialRarities, 1, int32(len(rarities)))
+	maxActive := clamp32(curve.maxActiveRarities, 1, int32(len(rarities)))
+	unlockInterval := curve.unlockInterval
+	if unlockInterval <= 0 {
+		unlockInterval = 4
+	}
+	unlocked := initial + (level-1)/unlockInterval
+	unlocked = clamp32(unlocked, initial, int32(len(rarities)))
+	start := int32(0)
+	if unlocked > maxActive {
+		start = unlocked - maxActive
+	}
+	activeRarities := append([]int32(nil), rarities[start:unlocked]...)
+	base := geometricWeights(len(activeRarities), curve.lowestBaseWeight, curve.adjacentGapPct)
+	step := (level - 1) % unlockInterval
+	shift := step * clamp32(curve.progressShiftPct, 0, 10)
+	weights := applySmoothShift(base, shift, curve.topWeightCapPct)
+	return weights, activeRarities
+}
+
+type probabilityCurve struct {
+	rarities          []int32
+	initialRarities   int32
+	maxActiveRarities int32
+	unlockInterval    int32
+	lowestBaseWeight  int32
+	adjacentGapPct    int32
+	progressShiftPct  int32
+	topWeightCapPct   int32
+}
+
+func chestCurve(c gameplayconfig.ClosedLoopChestConfig) probabilityCurve {
+	return probabilityCurve{c.Rarities, c.InitialRarities, c.MaxActiveRarities, c.UnlockInterval, c.LowestBaseWeight, c.AdjacentGapPct, c.ProgressShiftPct, c.TopWeightCapPct}
+}
+
+func shopCurve(c gameplayconfig.ClosedLoopShopConfig) probabilityCurve {
+	return probabilityCurve{c.Rarities, c.InitialRarities, c.MaxActiveRarities, c.UnlockInterval, c.LowestBaseWeight, c.AdjacentGapPct, c.ProgressShiftPct, c.TopWeightCapPct}
+}
+
+func geometricWeights(count int, lowestBaseWeight int32, adjacentGapPct int32) []int32 {
+	if count <= 0 {
+		return nil
+	}
+	if lowestBaseWeight <= 0 {
+		lowestBaseWeight = 8
+	}
+	gap := clamp32(adjacentGapPct, 40, 80)
+	weights := make([]int32, count)
+	weights[count-1] = lowestBaseWeight
+	for i := count - 2; i >= 0; i-- {
+		weights[i] = weights[i+1] * (100 + gap) / 100
+		if weights[i] <= weights[i+1] {
+			weights[i] = weights[i+1] + 1
+		}
+	}
+	return normalizeTo100(weights)
+}
+
+func applySmoothShift(base []int32, shift int32, topCap int32) []int32 {
+	weights := append([]int32(nil), base...)
+	if len(weights) < 2 || shift <= 0 {
+		return capTopWeight(normalizeTo100(weights), topCap)
+	}
+	highStart := len(weights) / 2
+	lowCount := highStart
+	highCount := len(weights) - highStart
+	for i := 0; i < highStart; i++ {
+		weights[i] -= shift / int32(lowCount)
+	}
+	for i := highStart; i < len(weights); i++ {
+		weights[i] += shift / int32(highCount)
+	}
+	return capTopWeight(normalizeTo100(weights), topCap)
+}
+
+func normalizeTo100(weights []int32) []int32 {
+	if len(weights) == 0 {
+		return weights
+	}
+	total := int32(0)
+	for i, w := range weights {
+		if w < 0 {
+			weights[i] = 0
+		}
+		total += weights[i]
+	}
+	if total <= 0 {
+		weights[0] = 100
+		return weights
+	}
+	remaining := int32(100)
+	for i := range weights {
+		if i == len(weights)-1 {
+			weights[i] = remaining
+			break
+		}
+		weights[i] = weights[i] * 100 / total
+		remaining -= weights[i]
+	}
+	return weights
+}
+
+func capTopWeight(weights []int32, topCap int32) []int32 {
+	if len(weights) == 0 || topCap <= 0 || weights[len(weights)-1] <= topCap {
+		return weights
+	}
+	excess := weights[len(weights)-1] - topCap
+	weights[len(weights)-1] = topCap
+	weights[0] += excess
+	return normalizeTo100(weights)
+}
+
+func clamp32(v, min, max int32) int32 {
+	if v < min {
+		return min
+	}
+	if v > max {
+		return max
+	}
+	return v
+}
+
+func (s *ClosedLoopService) shopDrawsPerLevel(skill bool) int32 {
+	cfg := s.players.Cfg().ClosedLoop
+	if skill {
+		if cfg.Economy.SkillDrawsPerLevel > 0 {
+			return cfg.Economy.SkillDrawsPerLevel
+		}
+		return 10
+	}
+	if cfg.Economy.CompanionDrawsPerLevel > 0 {
+		return cfg.Economy.CompanionDrawsPerLevel
+	}
+	return 10
+}
+
+func min32(a, b int32) int32 {
+	if a < b {
+		return a
+	}
+	return b
 }
 
 func loopError(code commonv1.ErrorCode, message string) *commonv1.ErrorInfo {
