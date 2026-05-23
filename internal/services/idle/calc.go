@@ -4,7 +4,7 @@ import (
 	"math"
 	"time"
 
-	rewardv1 "github.com/slimeyquest/proto/gen/go/reward"
+	"github.com/slimeyquest/server/internal/apitypes"
 	"github.com/slimeyquest/server/internal/gameplayconfig"
 	"github.com/slimeyquest/server/internal/services/player"
 	"github.com/slimeyquest/server/internal/services/reward"
@@ -74,8 +74,8 @@ func ComputePreview(state *player.ProgressState, cfg *gameplayconfig.Config, now
 }
 
 // PreviewBundle builds a read-only gold preview bundle for login UI.
-func PreviewBundle(preview Preview) *rewardv1.RewardBundle {
-	return reward.BundleFromGrants(rewardv1.RewardSource_REWARD_SOURCE_IDLE_CLAIM, preview.GoldTotal, nil)
+func PreviewBundle(preview Preview) *apitypes.RewardBundle {
+	return reward.BundleFromGrants(apitypes.RewardSourceIdleClaim, preview.GoldTotal, nil)
 }
 
 // ClaimGrants builds explicit equipment grants for a claim.

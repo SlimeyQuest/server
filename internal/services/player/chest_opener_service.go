@@ -6,9 +6,7 @@ import (
 	"hash/fnv"
 	"time"
 
-	commonv1 "github.com/slimeyquest/proto/gen/go/common"
-	equipmentv1 "github.com/slimeyquest/proto/gen/go/equipment"
-	playerv1 "github.com/slimeyquest/proto/gen/go/player"
+	"github.com/slimeyquest/server/internal/apitypes"
 	"github.com/slimeyquest/server/internal/gameplayconfig"
 )
 
@@ -43,7 +41,7 @@ func NewClosedLoopService(players Repository) *ClosedLoopService {
 }
 
 // CreateRole updates the display name and returns the current role profile.
-func (s *ChestOpenerService) CreateRole(ctx context.Context, playerID int64, displayName string) (*playerv1.CreateRoleRes, error) {
+func (s *ChestOpenerService) CreateRole(ctx context.Context, playerID int64, displayName string) (*apitypes.CreateRoleRes, error) {
 	state, err := s.players.LoadProgress(ctx, playerID)
 	if err != nil {
 		return nil, err
@@ -54,11 +52,11 @@ func (s *ChestOpenerService) CreateRole(ctx context.Context, playerID int64, dis
 	if err := s.players.SaveRole(ctx, state); err != nil {
 		return nil, err
 	}
-	return &playerv1.CreateRoleRes{Profile: ToProfile(state, s.players.Cfg())}, nil
+	return &apitypes.CreateRoleRes{Profile: ToProfile(state, s.players.Cfg())}, nil
 }
 
 // OpenChest grants one equipment item from a chest-level-scaled drop table.
-func (s *ClosedLoopService) OpenChest(ctx context.Context, playerID int64, count int32) (*equipmentv1.ChestOpenRes, error) {
+func (s *ClosedLoopService) OpenChest(ctx context.Context, playerID int64, count int32) (*apitypes.ChestOpenRes, error) {
 	state, err := s.players.LoadProgress(ctx, playerID)
 	if err != nil {
 		return nil, err
@@ -67,62 +65,62 @@ func (s *ClosedLoopService) OpenChest(ctx context.Context, playerID int64, count
 		count = 1
 	}
 	if state.BoxCount() < count {
-		return &equipmentv1.ChestOpenRes{Error: loopError(commonv1.ErrorCode_ERROR_CODE_INVALID_REQUEST, "not enough boxes"), RemainingBoxCount: state.BoxCount()}, nil
+		return &apitypes.ChestOpenRes{Error: apitypes.Err(apitypes.ErrorCodeInvalidRequest, "not enough boxes"), RemainingBoxCount: state.BoxCount()}, nil
 	}
-	equipment := make([]*equipmentv1.EquipmentInfo, 0, count)
+	equipment := make([]apitypes.EquipmentInfo, 0, count)
 	for i := int32(0); i < count; i++ {
 		seed := playerID + int64(i) + time.Now().UnixNano()
 		row := s.pickChestDrop(state, seed)
 		inst := state.Equipment.AddInstance(row)
-		equipment = append(equipment, inst.ToProto())
+		equipment = append(equipment, inst.ToAPI())
 	}
 	state.SetBoxCount(state.BoxCount() - count)
 	if err := s.players.SaveProgress(ctx, state); err != nil {
 		return nil, err
 	}
-	return &equipmentv1.ChestOpenRes{Equipment: equipment, RemainingBoxCount: state.BoxCount()}, nil
+	return &apitypes.ChestOpenRes{Equipment: equipment, RemainingBoxCount: state.BoxCount()}, nil
 }
 
 // EquipItem equips an owned item into its compatible slot.
-func (s *ClosedLoopService) EquipItem(ctx context.Context, playerID int64, equipmentUID int64, requestedSlot equipmentv1.EquipmentSlot) (*equipmentv1.EquipItemRes, error) {
+func (s *ClosedLoopService) EquipItem(ctx context.Context, playerID int64, equipmentUID int64, requestedSlot int32) (*apitypes.EquipItemRes, error) {
 	state, err := s.players.LoadProgress(ctx, playerID)
 	if err != nil {
 		return nil, err
 	}
 	inst, ok := state.Equipment.Instances[equipmentUID]
 	if !ok {
-		return &equipmentv1.EquipItemRes{Error: loopError(commonv1.ErrorCode_ERROR_CODE_NOT_FOUND, "equipment not found")}, nil
+		return &apitypes.EquipItemRes{Error: apitypes.Err(apitypes.ErrorCodeNotFound, "equipment not found")}, nil
 	}
-	slot := equipmentv1.EquipmentSlot(inst.Slot)
-	if requestedSlot != equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_UNSPECIFIED && requestedSlot != slot {
-		return &equipmentv1.EquipItemRes{Error: loopError(commonv1.ErrorCode_ERROR_CODE_INVALID_REQUEST, "equipment slot mismatch")}, nil
+	slot := inst.Slot
+	if requestedSlot != 0 && requestedSlot != slot {
+		return &apitypes.EquipItemRes{Error: apitypes.Err(apitypes.ErrorCodeInvalidRequest, "equipment slot mismatch")}, nil
 	}
 	if state.Equipment.Equipped == nil {
 		state.Equipment.Equipped = make(map[int32]int64)
 	}
-	state.Equipment.Equipped[int32(slot)] = equipmentUID
+	state.Equipment.Equipped[slot] = equipmentUID
 	if err := s.players.SaveProgress(ctx, state); err != nil {
 		return nil, err
 	}
-	return &equipmentv1.EquipItemRes{
-		EquippedSlots: state.Equipment.EquippedSlots(),
+	return &apitypes.EquipItemRes{
+		EquippedSlots: state.Equipment.EquippedSlotsAPI(),
 		CombatPower:   ComputeCombatPower(state, s.players.Cfg()),
 	}, nil
 }
 
 // DecomposeEquipment removes one unequipped equipment and grants gold.
-func (s *ClosedLoopService) DecomposeEquipment(ctx context.Context, playerID int64, equipmentUID int64) (*equipmentv1.DecomposeEquipmentRes, error) {
+func (s *ClosedLoopService) DecomposeEquipment(ctx context.Context, playerID int64, equipmentUID int64) (*apitypes.DecomposeEquipmentRes, error) {
 	state, err := s.players.LoadProgress(ctx, playerID)
 	if err != nil {
 		return nil, err
 	}
 	inst, ok := state.Equipment.Instances[equipmentUID]
 	if !ok {
-		return &equipmentv1.DecomposeEquipmentRes{Error: loopError(commonv1.ErrorCode_ERROR_CODE_NOT_FOUND, "equipment not found")}, nil
+		return &apitypes.DecomposeEquipmentRes{Error: apitypes.Err(apitypes.ErrorCodeNotFound, "equipment not found")}, nil
 	}
 	for _, equippedUID := range state.Equipment.Equipped {
 		if equippedUID == equipmentUID {
-			return &equipmentv1.DecomposeEquipmentRes{Error: loopError(commonv1.ErrorCode_ERROR_CODE_INVALID_REQUEST, "equipped item cannot be decomposed")}, nil
+			return &apitypes.DecomposeEquipmentRes{Error: apitypes.Err(apitypes.ErrorCodeInvalidRequest, "equipped item cannot be decomposed")}, nil
 		}
 	}
 	delete(state.Equipment.Instances, equipmentUID)
@@ -131,11 +129,11 @@ func (s *ClosedLoopService) DecomposeEquipment(ctx context.Context, playerID int
 	if err := s.players.SaveProgress(ctx, state); err != nil {
 		return nil, err
 	}
-	return &equipmentv1.DecomposeEquipmentRes{GainedGold: gained, TotalGold: state.Gold}, nil
+	return &apitypes.DecomposeEquipmentRes{GainedGold: gained, TotalGold: state.Gold}, nil
 }
 
 // UpgradeChest spends gold to raise chest level.
-func (s *ClosedLoopService) UpgradeChest(ctx context.Context, playerID int64, targetLevel int32) (*equipmentv1.UpgradeChestRes, error) {
+func (s *ClosedLoopService) UpgradeChest(ctx context.Context, playerID int64, targetLevel int32) (*apitypes.UpgradeChestRes, error) {
 	state, err := s.players.LoadProgress(ctx, playerID)
 	if err != nil {
 		return nil, err
@@ -148,46 +146,46 @@ func (s *ClosedLoopService) UpgradeChest(ctx context.Context, playerID int64, ta
 		targetLevel = s.players.Cfg().ClosedLoop.OpenerMaxLevelValue()
 	}
 	if targetLevel <= current {
-		return &equipmentv1.UpgradeChestRes{ChestLevel: current, TotalGold: state.Gold}, nil
+		return &apitypes.UpgradeChestRes{ChestLevel: current, TotalGold: state.Gold}, nil
 	}
 	cost := s.chestUpgradeCost(current, targetLevel)
 	if state.Gold < cost {
-		return &equipmentv1.UpgradeChestRes{Error: loopError(commonv1.ErrorCode_ERROR_CODE_INVALID_REQUEST, "not enough gold"), ChestLevel: current, TotalGold: state.Gold}, nil
+		return &apitypes.UpgradeChestRes{Error: apitypes.Err(apitypes.ErrorCodeInvalidRequest, "not enough gold"), ChestLevel: current, TotalGold: state.Gold}, nil
 	}
 	state.Gold -= cost
 	state.SetChestLevel(targetLevel)
 	if err := s.players.SaveProgress(ctx, state); err != nil {
 		return nil, err
 	}
-	return &equipmentv1.UpgradeChestRes{ChestLevel: targetLevel, TotalGold: state.Gold}, nil
+	return &apitypes.UpgradeChestRes{ChestLevel: targetLevel, TotalGold: state.Gold}, nil
 }
 
 // DrawSkill returns MVP test skills and a shop level derived from draw count.
-func (s *ClosedLoopService) DrawSkill(_ context.Context, playerID int64, drawCount int32) (*playerv1.DrawSkillRes, error) {
+func (s *ClosedLoopService) DrawSkill(_ context.Context, playerID int64, drawCount int32) (*apitypes.DrawSkillRes, error) {
 	if drawCount <= 0 {
 		drawCount = 1
 	}
 	cfg := s.players.Cfg().ClosedLoop
 	shopLevel := min32(SkillShopLevelBase+drawCount/s.shopDrawsPerLevel(true), maxShopLevel)
-	rewards := make([]*playerv1.SkillInfo, 0, drawCount)
+	rewards := make([]apitypes.SkillInfo, 0, drawCount)
 	for i := int32(0); i < drawCount; i++ {
 		rewards = append(rewards, testSkill(playerID, i, shopLevel, cfg.Shop))
 	}
-	return &playerv1.DrawSkillRes{Rewards: rewards, ShopLevel: shopLevel}, nil
+	return &apitypes.DrawSkillRes{Rewards: rewards, ShopLevel: shopLevel}, nil
 }
 
 // DrawCompanion returns MVP test companions and a shop level derived from draw count.
-func (s *ClosedLoopService) DrawCompanion(_ context.Context, playerID int64, drawCount int32) (*playerv1.DrawCompanionRes, error) {
+func (s *ClosedLoopService) DrawCompanion(_ context.Context, playerID int64, drawCount int32) (*apitypes.DrawCompanionRes, error) {
 	if drawCount <= 0 {
 		drawCount = 1
 	}
 	cfg := s.players.Cfg().ClosedLoop
 	shopLevel := min32(CompanionShopLevelBase+drawCount/s.shopDrawsPerLevel(false), maxShopLevel)
-	rewards := make([]*playerv1.CompanionInfo, 0, drawCount)
+	rewards := make([]apitypes.CompanionInfo, 0, drawCount)
 	for i := int32(0); i < drawCount; i++ {
 		rewards = append(rewards, testCompanion(playerID, i, shopLevel, cfg.Shop))
 	}
-	return &playerv1.DrawCompanionRes{Rewards: rewards, ShopLevel: shopLevel}, nil
+	return &apitypes.DrawCompanionRes{Rewards: rewards, ShopLevel: shopLevel}, nil
 }
 
 func (s *ClosedLoopService) pickChestDrop(state *ProgressState, seed int64) gameplayconfig.DropRow {
@@ -202,28 +200,16 @@ func (s *ClosedLoopService) pickChestDrop(state *ProgressState, seed int64) game
 }
 
 func normalizeDropSlot(slot int32, seed int64) int32 {
-	slots := []equipmentv1.EquipmentSlot{
-		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_HAT,
-		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_SHOE_LEFT,
-		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_SHOE_RIGHT,
-		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_GLOVE_LEFT,
-		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_GLOVE_RIGHT,
-		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_CLOTH,
-		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_PANTS,
-		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_WEAPON,
-		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_RING_LEFT,
-		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_RING_RIGHT,
-	}
-	for _, s := range slots {
-		if slot == int32(s) {
+	for _, s := range apitypes.AllEquipmentSlots {
+		if slot == s {
 			return slot
 		}
 	}
-	idx := int(seed % int64(len(slots)))
+	idx := int(seed % int64(len(apitypes.AllEquipmentSlots)))
 	if idx < 0 {
 		idx = -idx
 	}
-	return int32(slots[idx])
+	return apitypes.AllEquipmentSlots[idx]
 }
 
 func (s *ClosedLoopService) decomposeGold(inst EquipmentInstance) int64 {
@@ -261,14 +247,14 @@ func (s *ClosedLoopService) chestUpgradeCost(current, target int32) int64 {
 	return total
 }
 
-func testSkill(playerID int64, index int32, shopLevel int32, curve gameplayconfig.ClosedLoopShopConfig) *playerv1.SkillInfo {
+func testSkill(playerID int64, index int32, shopLevel int32, curve gameplayconfig.ClosedLoopShopConfig) apitypes.SkillInfo {
 	quality := rarityForLevel(shopLevel, shopCurve(curve), stablePick(playerID, index))
-	return &playerv1.SkillInfo{SkillId: 1001, Name: fmt.Sprintf("Warrior Slash %d", stablePick(playerID, index)+1), Quality: quality}
+	return apitypes.SkillInfo{SkillID: 1001, Name: fmt.Sprintf("Warrior Slash %d", stablePick(playerID, index)+1), Quality: quality}
 }
 
-func testCompanion(playerID int64, index int32, shopLevel int32, curve gameplayconfig.ClosedLoopShopConfig) *playerv1.CompanionInfo {
+func testCompanion(playerID int64, index int32, shopLevel int32, curve gameplayconfig.ClosedLoopShopConfig) apitypes.CompanionInfo {
 	quality := rarityForLevel(shopLevel, shopCurve(curve), stablePick(playerID, index))
-	return &playerv1.CompanionInfo{CompanionId: 2001, Name: fmt.Sprintf("Tiny Slime %d", stablePick(playerID, index)+1), Quality: quality}
+	return apitypes.CompanionInfo{CompanionID: 2001, Name: fmt.Sprintf("Tiny Slime %d", stablePick(playerID, index)+1), Quality: quality}
 }
 
 func stablePick(parts ...any) uint32 {
@@ -448,6 +434,3 @@ func min32(a, b int32) int32 {
 	return b
 }
 
-func loopError(code commonv1.ErrorCode, message string) *commonv1.ErrorInfo {
-	return &commonv1.ErrorInfo{Code: code, Message: message}
-}

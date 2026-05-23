@@ -5,8 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	idlev1 "github.com/slimeyquest/proto/gen/go/idle"
-	rewardv1 "github.com/slimeyquest/proto/gen/go/reward"
+	"github.com/slimeyquest/server/internal/apitypes"
 	"github.com/slimeyquest/server/internal/gameplayconfig"
 	"github.com/slimeyquest/server/internal/services/player"
 	"github.com/slimeyquest/server/internal/services/reward"
@@ -27,16 +26,8 @@ func NewService(log *slog.Logger, cfg *gameplayconfig.Config, players player.Rep
 	return &Service{log: log, cfg: cfg, players: players, rewards: rewards}
 }
 
-// PreviewForLogin builds idle state without advancing last_claim_at.
-func (s *Service) PreviewForLogin(ctx context.Context, state *player.ProgressState, now time.Time) *idlev1.IdleState {
-	preview := ComputePreview(state, s.cfg, now)
-	bundle := PreviewBundle(preview)
-	profile := player.ToProfile(state, s.cfg)
-	return BuildIdleState(preview, bundle, profile)
-}
-
 // Claim settles idle rewards for the player.
-func (s *Service) Claim(ctx context.Context, playerID int64, claimedThroughMs int64) (*idlev1.ClaimIdleRewardsRes, error) {
+func (s *Service) Claim(ctx context.Context, playerID int64, claimedThroughMs int64) (*apitypes.ClaimIdleRewardsRes, error) {
 	state, err := s.players.LoadProgress(ctx, playerID)
 	if err != nil {
 		return nil, err
@@ -61,7 +52,7 @@ func (s *Service) Claim(ctx context.Context, playerID int64, claimedThroughMs in
 	grants := ClaimGrants(state, s.cfg, preview)
 	applyReq := reward.ApplyRequest{
 		PlayerID:        playerID,
-		Source:          rewardv1.RewardSource_REWARD_SOURCE_IDLE_CLAIM,
+		Source:          apitypes.RewardSourceIdleClaim,
 		GoldDelta:       preview.GoldTotal,
 		EquipmentGrants: grants,
 	}
@@ -80,7 +71,7 @@ func (s *Service) Claim(ctx context.Context, playerID int64, claimedThroughMs in
 	freshPreview := ComputePreview(result.State, s.cfg, now)
 	idleState := BuildIdleState(freshPreview, PreviewBundle(freshPreview), profile)
 
-	return &idlev1.ClaimIdleRewardsRes{
+	return &apitypes.ClaimIdleRewardsRes{
 		Success:       true,
 		ClaimedReward: result.AppliedBundle,
 		IdleState:     idleState,

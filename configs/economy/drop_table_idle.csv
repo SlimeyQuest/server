@@ -1,5 +1,0 @@
-config_id,rarity,weight,slot,attack,hp,bonus_attack_pct
-101,1,70,1,10,0,0
-102,2,20,1,20,0,0
-103,1,70,2,0,15,0
-201,1,80,3,0,0,500

@@ -3,8 +3,7 @@ package player
 import (
 	"encoding/json"
 
-	commonv1 "github.com/slimeyquest/proto/gen/go/common"
-	equipmentv1 "github.com/slimeyquest/proto/gen/go/equipment"
+	"github.com/slimeyquest/server/internal/apitypes"
 	"github.com/slimeyquest/server/internal/gameplayconfig"
 )
 
@@ -92,7 +91,7 @@ func StarterEquipment(cfg *gameplayconfig.Config) EquipmentData {
 		NextUID:   uid + 1,
 		Instances: map[int64]EquipmentInstance{uid: inst},
 		Equipped: map[int32]int64{
-			int32(equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_WEAPON): uid,
+			apitypes.SlotWeapon: uid,
 		},
 	}
 }
@@ -121,43 +120,30 @@ func (d *EquipmentData) AddInstance(row gameplayconfig.DropRow) EquipmentInstanc
 	return inst
 }
 
-// EquippedSlots returns protobuf equipped slot entries.
-func (d *EquipmentData) EquippedSlots() []*equipmentv1.EquippedSlot {
-	slots := []equipmentv1.EquipmentSlot{
-		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_HAT,
-		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_SHOE_LEFT,
-		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_SHOE_RIGHT,
-		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_GLOVE_LEFT,
-		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_GLOVE_RIGHT,
-		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_CLOTH,
-		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_PANTS,
-		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_WEAPON,
-		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_RING_LEFT,
-		equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_RING_RIGHT,
-	}
-	out := make([]*equipmentv1.EquippedSlot, 0, len(slots))
-	for _, slot := range slots {
-		uid := d.Equipped[int32(slot)]
-		out = append(out, &equipmentv1.EquippedSlot{
-			Slot:         slot,
-			EquipmentUid: uid,
-		})
-	}
-	return out
-}
-
-// ToProto converts an instance to EquipmentInfo.
-func (inst EquipmentInstance) ToProto() *equipmentv1.EquipmentInfo {
-	return &equipmentv1.EquipmentInfo{
-		EquipmentUid: inst.UID,
-		ConfigId:     inst.ConfigID,
-		Slot:         equipmentv1.EquipmentSlot(inst.Slot),
-		Rarity:       commonv1.EquipmentRarity(inst.Rarity),
+// ToAPI converts an instance to API equipment info.
+func (inst EquipmentInstance) ToAPI() apitypes.EquipmentInfo {
+	return apitypes.EquipmentInfo{
+		EquipmentUID: inst.UID,
+		ConfigID:     inst.ConfigID,
+		Slot:         apitypes.SlotName(inst.Slot),
+		Rarity:       inst.Rarity,
 		Level:        inst.Level,
-		Stats: &equipmentv1.EquipmentStats{
+		Stats: &apitypes.EquipmentStats{
 			Attack:         inst.Attack,
-			Hp:             inst.HP,
+			HP:             inst.HP,
 			BonusAttackPct: inst.BonusAttackPct,
 		},
 	}
+}
+
+// EquippedSlotsAPI returns equipped slots for API responses.
+func (d *EquipmentData) EquippedSlotsAPI() []apitypes.EquippedSlot {
+	out := make([]apitypes.EquippedSlot, 0, len(apitypes.AllEquipmentSlots))
+	for _, slot := range apitypes.AllEquipmentSlots {
+		out = append(out, apitypes.EquippedSlot{
+			Slot:         apitypes.SlotName(slot),
+			EquipmentUID: d.Equipped[slot],
+		})
+	}
+	return out
 }

@@ -4,9 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	equipmentv1 "github.com/slimeyquest/proto/gen/go/equipment"
-	rewardv1 "github.com/slimeyquest/proto/gen/go/reward"
-	stagev1 "github.com/slimeyquest/proto/gen/go/stage"
+	"github.com/slimeyquest/server/internal/apitypes"
 	"github.com/slimeyquest/server/internal/gameplayconfig"
 	"github.com/slimeyquest/server/internal/services/player"
 	"github.com/slimeyquest/server/internal/services/reward"
@@ -26,12 +24,12 @@ func NewService(log *slog.Logger, cfg *gameplayconfig.Config, players player.Rep
 }
 
 // BuildStageState returns the current stage snapshot for a player.
-func (s *Service) BuildStageState(state *player.ProgressState) *stagev1.StageState {
+func (s *Service) BuildStageState(state *player.ProgressState) *apitypes.StageState {
 	challengeFlat := ChallengeFlat(state.HighestStageCleared)
 	rec := s.cfg.RecommendedPower(challengeFlat)
 	isCleared := challengeFlat <= state.HighestStageCleared
 
-	milestones := make([]*rewardv1.RewardBundle, 0)
+	milestones := make([]*apitypes.RewardBundle, 0)
 	for _, flat := range gameplayconfig.MilestoneFlats {
 		if flat <= state.HighestStageCleared {
 			continue
@@ -44,14 +42,14 @@ func (s *Service) BuildStageState(state *player.ProgressState) *stagev1.StageSta
 			continue
 		}
 		milestones = append(milestones, reward.BundleFromGrants(
-			rewardv1.RewardSource_REWARD_SOURCE_STAGE_MILESTONE,
+			apitypes.RewardSourceStageMilestone,
 			row.MilestoneGold,
 			nil,
 		))
 	}
 
-	return &stagev1.StageState{
-		AdventureId:            state.AdventureID,
+	return &apitypes.StageState{
+		AdventureID:            state.AdventureID,
 		StageIndex:             state.StageIndex,
 		HighestStageCleared:    state.HighestStageCleared,
 		RecommendedCombatPower: rec,
@@ -61,14 +59,14 @@ func (s *Service) BuildStageState(state *player.ProgressState) *stagev1.StageSta
 }
 
 // PushStage attempts to clear the current stage target.
-func (s *Service) PushStage(ctx context.Context, playerID int64, targetStageIndex int32) (*stagev1.PushStageRes, error) {
+func (s *Service) PushStage(ctx context.Context, playerID int64, targetStageIndex int32) (*apitypes.PushStageRes, error) {
 	state, err := s.players.LoadProgress(ctx, playerID)
 	if err != nil {
 		return nil, err
 	}
 
 	if !IsCurrentTarget(state.AdventureID, state.StageIndex, targetStageIndex) {
-		return &stagev1.PushStageRes{
+		return &apitypes.PushStageRes{
 			Success:    false,
 			StageState: s.BuildStageState(state),
 		}, nil
@@ -76,7 +74,7 @@ func (s *Service) PushStage(ctx context.Context, playerID int64, targetStageInde
 
 	challengeFlat := FlatStage(state.AdventureID, state.StageIndex)
 	if !IsUnlocked(state.HighestStageCleared, challengeFlat) {
-		return &stagev1.PushStageRes{
+		return &apitypes.PushStageRes{
 			Success:    false,
 			StageState: s.BuildStageState(state),
 		}, nil
@@ -91,7 +89,7 @@ func (s *Service) PushStage(ctx context.Context, playerID int64, targetStageInde
 			"combat_power", combatPower,
 			"recommended", recommended,
 		)
-		return &stagev1.PushStageRes{
+		return &apitypes.PushStageRes{
 			Success:    false,
 			StageState: s.BuildStageState(state),
 		}, nil
@@ -99,21 +97,21 @@ func (s *Service) PushStage(ctx context.Context, playerID int64, targetStageInde
 
 	row, ok := s.cfg.Stage(challengeFlat)
 	if !ok {
-		return &stagev1.PushStageRes{
+		return &apitypes.PushStageRes{
 			Success:    false,
 			StageState: s.BuildStageState(state),
 		}, nil
 	}
 
 	firstClear := challengeFlat > state.HighestStageCleared
-	var milestoneBundle *rewardv1.RewardBundle
-	var boxReward *equipmentv1.StageBoxReward
+	var milestoneBundle *apitypes.RewardBundle
+	var boxReward *apitypes.StageBoxReward
 	if firstClear {
 		goldReward := row.FirstClearGold
 		if goldReward > 0 {
 			if _, err := s.rewards.GrantInMemory(ctx, state, reward.ApplyRequest{
 				PlayerID:  playerID,
-				Source:    rewardv1.RewardSource_REWARD_SOURCE_STAGE_CLEAR,
+				Source:    apitypes.RewardSourceStageClear,
 				GoldDelta: goldReward,
 			}); err != nil {
 				return nil, err
@@ -130,7 +128,7 @@ func (s *Service) PushStage(ctx context.Context, playerID int64, targetStageInde
 
 		boxCount := s.stageBoxCount(playerID, challengeFlat)
 		state.AddBoxes(boxCount)
-		boxReward = &equipmentv1.StageBoxReward{
+		boxReward = &apitypes.StageBoxReward{
 			BoxCount:      boxCount,
 			TotalBoxCount: state.BoxCount(),
 		}
@@ -138,13 +136,13 @@ func (s *Service) PushStage(ctx context.Context, playerID int64, targetStageInde
 		if gameplayconfig.IsMilestone(challengeFlat) && row.MilestoneGold > 0 && !state.HasClearedMilestone(challengeFlat) {
 			state.MarkMilestone(challengeFlat)
 			milestoneBundle = reward.BundleFromGrants(
-				rewardv1.RewardSource_REWARD_SOURCE_STAGE_MILESTONE,
+				apitypes.RewardSourceStageMilestone,
 				row.MilestoneGold,
 				nil,
 			)
 			if _, err := s.rewards.GrantInMemory(ctx, state, reward.ApplyRequest{
 				PlayerID:  playerID,
-				Source:    rewardv1.RewardSource_REWARD_SOURCE_STAGE_MILESTONE,
+				Source:    apitypes.RewardSourceStageMilestone,
 				GoldDelta: row.MilestoneGold,
 			}); err != nil {
 				return nil, err
@@ -161,7 +159,7 @@ func (s *Service) PushStage(ctx context.Context, playerID int64, targetStageInde
 		"flat_stage", challengeFlat,
 	)
 
-	return &stagev1.PushStageRes{
+	return &apitypes.PushStageRes{
 		Success:         true,
 		StageState:      s.BuildStageState(state),
 		MilestoneReward: milestoneBundle,

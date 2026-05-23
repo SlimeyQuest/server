@@ -1,7 +1,7 @@
 package reward
 
 import (
-	rewardv1 "github.com/slimeyquest/proto/gen/go/reward"
+	"github.com/slimeyquest/server/internal/apitypes"
 	"github.com/slimeyquest/server/internal/services/player"
 )
 
@@ -18,7 +18,7 @@ type EquipmentGrant struct {
 // ApplyRequest describes a server-authoritative reward application.
 type ApplyRequest struct {
 	PlayerID        int64
-	Source          rewardv1.RewardSource
+	Source          string
 	GoldDelta       int64
 	EquipmentGrants []EquipmentGrant
 }
@@ -26,5 +26,5 @@ type ApplyRequest struct {
 // ApplyResult is the updated player state after applying rewards.
 type ApplyResult struct {
 	State         *player.ProgressState
-	AppliedBundle *rewardv1.RewardBundle
+	AppliedBundle *apitypes.RewardBundle
 }

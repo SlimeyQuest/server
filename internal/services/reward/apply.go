@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	rewardv1 "github.com/slimeyquest/proto/gen/go/reward"
+	"github.com/slimeyquest/server/internal/apitypes"
 	"github.com/slimeyquest/server/internal/gameplayconfig"
 	"github.com/slimeyquest/server/internal/services/player"
 )
@@ -26,15 +26,15 @@ func (a *Applier) Apply(ctx context.Context, state *player.ProgressState, req Ap
 	if state == nil {
 		return nil, fmt.Errorf("apply reward: nil state")
 	}
-	if req.Source == rewardv1.RewardSource_REWARD_SOURCE_UNSPECIFIED {
+	if req.Source == "" {
 		return nil, fmt.Errorf("apply reward: unspecified source")
 	}
 
-	bundle := &rewardv1.RewardBundle{Source: req.Source}
+	bundle := &apitypes.RewardBundle{Source: req.Source}
 	if req.GoldDelta > 0 {
 		state.Gold += req.GoldDelta
-		bundle.Items = append(bundle.Items, &rewardv1.RewardItem{
-			Type: rewardv1.RewardType_REWARD_TYPE_GOLD,
+		bundle.Items = append(bundle.Items, apitypes.RewardItem{
+			Type: apitypes.RewardTypeGold,
 			Gold: req.GoldDelta,
 		})
 	}
@@ -54,15 +54,16 @@ func (a *Applier) Apply(ctx context.Context, state *player.ProgressState, req Ap
 		}
 		inst := state.Equipment.AddInstance(row)
 		equipCount++
-		bundle.Items = append(bundle.Items, &rewardv1.RewardItem{
-			Type:      rewardv1.RewardType_REWARD_TYPE_EQUIPMENT,
-			Equipment: inst.ToProto(),
+		eq := inst.ToAPI()
+		bundle.Items = append(bundle.Items, apitypes.RewardItem{
+			Type:      apitypes.RewardTypeEquipment,
+			Equipment: &eq,
 		})
 	}
 
 	a.log.InfoContext(ctx, "reward_applied",
 		"player_id", state.PlayerID,
-		"source", req.Source.String(),
+		"source", req.Source,
 		"gold", req.GoldDelta,
 		"equipment_count", equipCount,
 	)
@@ -73,19 +74,20 @@ func (a *Applier) Apply(ctx context.Context, state *player.ProgressState, req Ap
 	}, nil
 }
 
-// BundleFromGrants builds a proto bundle without applying (for previews).
-func BundleFromGrants(source rewardv1.RewardSource, gold int64, instances []player.EquipmentInstance) *rewardv1.RewardBundle {
-	bundle := &rewardv1.RewardBundle{Source: source}
+// BundleFromGrants builds a bundle without applying (for previews).
+func BundleFromGrants(source string, gold int64, instances []player.EquipmentInstance) *apitypes.RewardBundle {
+	bundle := &apitypes.RewardBundle{Source: source}
 	if gold > 0 {
-		bundle.Items = append(bundle.Items, &rewardv1.RewardItem{
-			Type: rewardv1.RewardType_REWARD_TYPE_GOLD,
+		bundle.Items = append(bundle.Items, apitypes.RewardItem{
+			Type: apitypes.RewardTypeGold,
 			Gold: gold,
 		})
 	}
 	for _, inst := range instances {
-		bundle.Items = append(bundle.Items, &rewardv1.RewardItem{
-			Type:      rewardv1.RewardType_REWARD_TYPE_EQUIPMENT,
-			Equipment: inst.ToProto(),
+		eq := inst.ToAPI()
+		bundle.Items = append(bundle.Items, apitypes.RewardItem{
+			Type:      apitypes.RewardTypeEquipment,
+			Equipment: &eq,
 		})
 	}
 	return bundle

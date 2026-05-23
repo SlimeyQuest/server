@@ -3,7 +3,7 @@ package player_test
 import (
 	"testing"
 
-	equipmentv1 "github.com/slimeyquest/proto/gen/go/equipment"
+	"github.com/slimeyquest/server/internal/apitypes"
 	"github.com/slimeyquest/server/internal/gameplayconfig"
 	"github.com/slimeyquest/server/internal/services/player"
 )
@@ -17,10 +17,10 @@ func TestComputeCombatPowerStarter(t *testing.T) {
 		Level: 1,
 		Equipment: player.EquipmentData{
 			Instances: map[int64]player.EquipmentInstance{
-				1: {UID: 1, Attack: 100, Slot: int32(equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_WEAPON)},
+				1: {UID: 1, Attack: 100, Slot: apitypes.SlotWeapon},
 			},
 			Equipped: map[int32]int64{
-				int32(equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_WEAPON): 1,
+				apitypes.SlotWeapon: 1,
 			},
 		},
 	}

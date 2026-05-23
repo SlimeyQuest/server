@@ -8,28 +8,20 @@ import (
 	"time"
 
 	"github.com/slimeyquest/ent"
-	commonv1 "github.com/slimeyquest/proto/gen/go/common"
-	loginv1 "github.com/slimeyquest/proto/gen/go/login"
+	"github.com/slimeyquest/server/internal/apitypes"
 	"github.com/slimeyquest/server/internal/services/idle"
 	"github.com/slimeyquest/server/internal/services/player"
 	"github.com/slimeyquest/server/internal/services/session"
 	"github.com/slimeyquest/server/internal/services/stage"
 )
 
-// SessionBinding identifies the interface-layer caller for session replacement.
-type SessionBinding struct {
-	ID     string
-	Handle any
-}
-
 // AuthResult contains successful session identity for interface adapters.
 type AuthResult struct {
-	PlayerID        int64
-	SessionToken    string
-	ReplacedBinding *SessionBinding
+	PlayerID     int64
+	SessionToken string
 }
 
-// Service handles guest login.
+// Service handles guest and phone login.
 type Service struct {
 	log      *slog.Logger
 	players  player.Repository
@@ -56,11 +48,14 @@ func NewService(
 }
 
 // GuestLogin authenticates a guest and returns a login response.
-func (s *Service) GuestLogin(ctx context.Context, binding SessionBinding, req *loginv1.GuestLoginReq) (*loginv1.GuestLoginRes, *AuthResult) {
-	clientVersion := req.GetClientVersion()
-	externalID := req.GetDeviceId()
+func (s *Service) GuestLogin(ctx context.Context, req *apitypes.GuestLoginReq) (*apitypes.AuthResponse, *AuthResult) {
+	if req == nil {
+		return authError(apitypes.ErrorCodeInvalidRequest, "missing guest login payload"), nil
+	}
+	clientVersion := req.ClientVersion
+	externalID := req.DeviceID
 	if externalID == "" {
-		return errorRes(commonv1.ErrorCode_ERROR_CODE_INVALID_REQUEST, "device_id is required"), nil
+		return authError(apitypes.ErrorCodeInvalidRequest, "device_id is required"), nil
 	}
 
 	p, created, err := s.loadOrCreatePlayer(ctx, PlatformGuest, externalID)
@@ -71,7 +66,7 @@ func (s *Service) GuestLogin(ctx context.Context, binding SessionBinding, req *l
 			"client_version", clientVersion,
 			"error", err,
 		)
-		return errorRes(commonv1.ErrorCode_ERROR_CODE_INTERNAL, "internal error"), nil
+		return authError(apitypes.ErrorCodeInternal, "internal error"), nil
 	}
 
 	p, err = s.players.RecordLogin(ctx, p.ID)
@@ -83,9 +78,13 @@ func (s *Service) GuestLogin(ctx context.Context, binding SessionBinding, req *l
 			"client_version", clientVersion,
 			"error", err,
 		)
-		return errorRes(commonv1.ErrorCode_ERROR_CODE_INTERNAL, "internal error"), nil
+		return authError(apitypes.ErrorCodeInternal, "internal error"), nil
 	}
 
+	return s.finishLogin(ctx, p, created, PlatformGuest, externalID, clientVersion)
+}
+
+func (s *Service) finishLogin(ctx context.Context, p *ent.Player, created bool, platform, externalID, clientVersion string) (*apitypes.AuthResponse, *AuthResult) {
 	state := player.FromEntity(p)
 	now := time.Now().UTC()
 	profile := player.ToProfile(state, s.players.Cfg())
@@ -94,33 +93,29 @@ func (s *Service) GuestLogin(ctx context.Context, binding SessionBinding, req *l
 	stageState := s.stage.BuildStageState(state)
 
 	playerID := int64(p.ID)
-	newSession, replaced := s.sessions.Bind(playerID, session.Binding{ID: binding.ID, Handle: binding.Handle})
-	var replacedBinding *SessionBinding
+	newSession, replaced := s.sessions.Bind(playerID)
 	if replaced != nil {
-		replacedBinding = &SessionBinding{ID: replaced.Binding.ID, Handle: replaced.Binding.Handle}
 		s.log.Info("session replacement",
 			"player_id", playerID,
-			"platform", PlatformGuest,
+			"platform", platform,
 			"external_id", externalID,
 			"client_version", clientVersion,
 			"old_token", replaced.Token,
 			"new_token", newSession.Token,
-			"old_binding_id", replaced.Binding.ID,
-			"new_binding_id", binding.ID,
 		)
 	}
 
 	if created {
 		s.log.Info("player created",
 			"player_id", playerID,
-			"platform", PlatformGuest,
+			"platform", platform,
 			"external_id", externalID,
 			"client_version", clientVersion,
 		)
 	} else {
 		s.log.Info("player loaded",
 			"player_id", playerID,
-			"platform", PlatformGuest,
+			"platform", platform,
 			"external_id", externalID,
 			"client_version", clientVersion,
 		)
@@ -129,23 +124,21 @@ func (s *Service) GuestLogin(ctx context.Context, binding SessionBinding, req *l
 	s.log.Info("login success",
 		"player_id", playerID,
 		"token", newSession.Token,
-		"platform", PlatformGuest,
+		"platform", platform,
 		"external_id", externalID,
 		"client_version", clientVersion,
 		"created", created,
-		"binding_id", binding.ID,
 	)
 
-	return &loginv1.GuestLoginRes{
+	return &apitypes.AuthResponse{
 			SessionToken: newSession.Token,
-			PlayerId:     playerID,
+			PlayerID:     playerID,
 			Profile:      profile,
 			IdleState:    idleState,
 			StageState:   stageState,
 		}, &AuthResult{
-			PlayerID:        playerID,
-			SessionToken:    newSession.Token,
-			ReplacedBinding: replacedBinding,
+			PlayerID:     playerID,
+			SessionToken: newSession.Token,
 		}
 }
 
@@ -165,29 +158,21 @@ func (s *Service) loadOrCreatePlayer(ctx context.Context, platform, externalID s
 	return p, true, nil
 }
 
-func errorRes(code commonv1.ErrorCode, message string) *loginv1.GuestLoginRes {
-	return &loginv1.GuestLoginRes{
-		Error: &commonv1.ErrorInfo{
-			Code:    code,
-			Message: message,
-		},
-	}
+func authError(code, message string) *apitypes.AuthResponse {
+	return &apitypes.AuthResponse{Error: apitypes.Err(code, message)}
 }
 
 // IsSuccess reports whether a login response represents success.
-func IsSuccess(res *loginv1.GuestLoginRes) bool {
-	if res == nil || res.Error == nil {
-		return true
-	}
-	return res.Error.Code == commonv1.ErrorCode_ERROR_CODE_OK || res.Error.Code == 0
+func IsSuccess(res *apitypes.AuthResponse) bool {
+	return res != nil && !apitypes.HasError(res.Error)
 }
 
 // ValidateResponse returns an error for failed login responses.
-func ValidateResponse(res *loginv1.GuestLoginRes) error {
+func ValidateResponse(res *apitypes.AuthResponse) error {
 	if IsSuccess(res) {
 		return nil
 	}
-	if res.Error == nil {
+	if res == nil || res.Error == nil {
 		return errors.New("login failed")
 	}
 	return fmt.Errorf("login failed: %s", res.Error.Message)

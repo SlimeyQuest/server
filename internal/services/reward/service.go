@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	rewardv1 "github.com/slimeyquest/proto/gen/go/reward"
+	"github.com/slimeyquest/server/internal/apitypes"
 	"github.com/slimeyquest/server/internal/gameplayconfig"
 	"github.com/slimeyquest/server/internal/services/player"
 )
@@ -49,34 +49,37 @@ func (s *Service) GrantInMemory(ctx context.Context, state *player.ProgressState
 	return s.applier.Apply(ctx, state, req)
 }
 
-// GrantBundle maps a RewardBundle proto into ApplyRequest and grants it.
-func (s *Service) GrantBundle(ctx context.Context, playerID int64, bundle *rewardv1.RewardBundle) (*ApplyResult, error) {
+// GrantBundle maps a reward bundle into ApplyRequest and grants it.
+func (s *Service) GrantBundle(ctx context.Context, playerID int64, bundle *apitypes.RewardBundle) (*ApplyResult, error) {
 	if bundle == nil {
 		return nil, fmt.Errorf("grant bundle: nil bundle")
 	}
 	req := ApplyRequest{
 		PlayerID: playerID,
-		Source:   bundle.GetSource(),
+		Source:   bundle.Source,
 	}
-	for _, item := range bundle.GetItems() {
-		switch item.GetType() {
-		case rewardv1.RewardType_REWARD_TYPE_GOLD:
-			req.GoldDelta += item.GetGold()
-		case rewardv1.RewardType_REWARD_TYPE_EQUIPMENT:
-			eq := item.GetEquipment()
-			if eq == nil {
+	for _, item := range bundle.Items {
+		switch item.Type {
+		case apitypes.RewardTypeGold:
+			req.GoldDelta += item.Gold
+		case apitypes.RewardTypeEquipment:
+			if item.Equipment == nil {
 				continue
 			}
-			stats := eq.GetStats()
+			eq := item.Equipment
+			stats := eq.Stats
 			grant := EquipmentGrant{
-				ConfigID: eq.GetConfigId(),
-				Slot:     int32(eq.GetSlot()),
-				Rarity:   int32(eq.GetRarity()),
+				ConfigID: eq.ConfigID,
+				Rarity:   eq.Rarity,
+			}
+			slot, ok := apitypes.ParseEquipmentSlot(eq.Slot)
+			if ok {
+				grant.Slot = slot
 			}
 			if stats != nil {
-				grant.Attack = stats.GetAttack()
-				grant.HP = stats.GetHp()
-				grant.BonusAttackPct = stats.GetBonusAttackPct()
+				grant.Attack = stats.Attack
+				grant.HP = stats.HP
+				grant.BonusAttackPct = stats.BonusAttackPct
 			}
 			req.EquipmentGrants = append(req.EquipmentGrants, grant)
 		}

@@ -74,7 +74,7 @@ func (r *Repository) CreatePlayerForPlatform(ctx context.Context, platform, exte
 		SetAdventureID(1).
 		SetStageIndex(1).
 		SetHighestStageCleared(0).
-		SetEquipmentJSON(EncodeEquipment(equip)).
+		SetEquipmentJSON(playersvc.EncodeEquipment(equip)).
 		SetClearedMilestones([]int32{}).
 		Save(ctx)
 	if err != nil {

@@ -7,13 +7,12 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"sync"
 
 	"github.com/slimeyquest/server/internal/config"
 	"github.com/slimeyquest/server/internal/data/playerrepo"
 	"github.com/slimeyquest/server/internal/data/storage"
 	"github.com/slimeyquest/server/internal/gameplayconfig"
-	"github.com/slimeyquest/server/internal/interfaces/network"
+	httpapi "github.com/slimeyquest/server/internal/interfaces/http"
 	"github.com/slimeyquest/server/internal/services/idle"
 	"github.com/slimeyquest/server/internal/services/login"
 	"github.com/slimeyquest/server/internal/services/player"
@@ -29,11 +28,10 @@ type App struct {
 	postgres *storage.Postgres
 	redis    *storage.Redis
 	ent      *storage.Ent
-	hub      *network.Hub
-	server   *network.Server
+	server   *httpapi.Server
 }
 
-// New initializes storage and the network layer.
+// New initializes storage and the HTTP API layer.
 func New(ctx context.Context, cfg *config.Config, log *slog.Logger) (*App, error) {
 	postgres, err := storage.NewPostgres(ctx, cfg)
 	if err != nil {
@@ -70,9 +68,7 @@ func New(ctx context.Context, cfg *config.Config, log *slog.Logger) (*App, error
 	stageSvc := stage.NewService(log.With("component", "stage"), gameplayCfg, playerRepo, rewardSvc)
 	loopSvc := player.NewClosedLoopService(playerRepo)
 	loginSvc := login.NewService(log.With("component", "login"), playerRepo, sessionMgr, idleSvc, stageSvc)
-	gameplayHandler := network.NewGameplay(idleSvc, stageSvc, loopSvc, sessionMgr)
-	hub := network.NewHub(log.With("component", "hub"), sessionMgr)
-	server := network.NewServer(cfg, log.With("component", "http"), hub, loginSvc, gameplayHandler)
+	server := httpapi.NewServer(cfg, log.With("component", "http"), loginSvc, idleSvc, stageSvc, loopSvc, sessionMgr)
 
 	return &App{
 		cfg:      cfg,
@@ -80,7 +76,6 @@ func New(ctx context.Context, cfg *config.Config, log *slog.Logger) (*App, error
 		postgres: postgres,
 		redis:    redis,
 		ent:      entClient,
-		hub:      hub,
 		server:   server,
 	}, nil
 }
@@ -92,26 +87,10 @@ func (a *App) Run(ctx context.Context) error {
 		"addr", a.cfg.HTTPAddr,
 	)
 
-	appCtx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	var wg sync.WaitGroup
 	errCh := make(chan error, 1)
-
-	wg.Add(1)
 	go func() {
-		defer wg.Done()
-		a.hub.Run(appCtx)
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
 		if err := a.server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			select {
-			case errCh <- err:
-			default:
-			}
+			errCh <- err
 		}
 	}()
 
@@ -120,8 +99,6 @@ func (a *App) Run(ctx context.Context) error {
 		a.log.Info("shutdown signal received")
 	case err := <-errCh:
 		if err != nil {
-			a.shutdown(appCtx)
-			wg.Wait()
 			return fmt.Errorf("http server: %w", err)
 		}
 	}
@@ -133,8 +110,6 @@ func (a *App) Run(ctx context.Context) error {
 		return err
 	}
 
-	cancel()
-	wg.Wait()
 	a.log.Info("shutdown complete")
 	return nil
 }
@@ -144,7 +119,6 @@ func (a *App) shutdown(ctx context.Context) error {
 		a.log.Warn("http shutdown error", "error", err)
 	}
 
-	a.hub.CloseAll()
 	a.ent.Close()
 	a.postgres.Close()
 	if err := a.redis.Close(); err != nil {

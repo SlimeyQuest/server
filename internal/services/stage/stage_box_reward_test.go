@@ -38,21 +38,21 @@ func TestPushStageGrantsConfiguredBoxReward(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !res.GetSuccess() {
+	if !res.Success {
 		t.Fatal("expected first stage clear success")
 	}
-	boxReward := res.GetBoxReward()
+	boxReward := res.BoxReward
 	if boxReward == nil {
 		t.Fatal("expected box reward")
 	}
-	if boxReward.GetBoxCount() < cfg.ClosedLoop.StageBoxMin || boxReward.GetBoxCount() > cfg.ClosedLoop.StageBoxMax {
-		t.Fatalf("box reward %d outside configured range [%d,%d]", boxReward.GetBoxCount(), cfg.ClosedLoop.StageBoxMin, cfg.ClosedLoop.StageBoxMax)
+	if boxReward.BoxCount < cfg.ClosedLoop.StageBoxMin || boxReward.BoxCount > cfg.ClosedLoop.StageBoxMax {
+		t.Fatalf("box reward %d outside configured range [%d,%d]", boxReward.BoxCount, cfg.ClosedLoop.StageBoxMin, cfg.ClosedLoop.StageBoxMax)
 	}
 	state, err := repo.LoadProgress(ctx, int64(p.ID))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if state.BoxCount() != boxReward.GetTotalBoxCount() {
-		t.Fatalf("expected stored boxes %d, got %d", boxReward.GetTotalBoxCount(), state.BoxCount())
+	if state.BoxCount() != boxReward.TotalBoxCount {
+		t.Fatalf("expected stored boxes %d, got %d", boxReward.TotalBoxCount, state.BoxCount())
 	}
 }

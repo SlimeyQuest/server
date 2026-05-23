@@ -19,13 +19,13 @@ alwaysApply: true
 
 * Use Gin only for required HTTP APIs
 
-# websocket 为核心实时协议
+# HTTP JSON REST 为核心协议
 
-* Use websocket as the primary realtime communication protocol
+* Use HTTP JSON REST under `/api/v1` as the primary client/server protocol
 
-# protobuf-first 接口设计
+# Gin 处理 HTTP 路由
 
-* Use protobuf-first API design
+* Use Gin for HTTP routing and middleware; keep handlers thin
 
 # 使用 ent ORM
 
@@ -179,55 +179,47 @@ alwaysApply: true
 
 ## Networking
 
-# 协议统一来自 proto 仓库
+# 协议文档在 docs 仓库
 
-* All protocols must come from the shared proto repository
+* API contract lives in `docs/api/http-v1.md`; update docs when changing endpoints
 
-# websocket 为主协议
+# HTTP JSON 为主协议
 
-* Websocket is the primary realtime protocol
+* Use `/api/v1` JSON REST for gameplay; Bearer tokens for authenticated routes
 
-# protobuf 为唯一协议格式
+# 类型定义在 apitypes
 
-* Use protobuf as the primary protocol format
+* Define request/response structs in `internal/apitypes` with explicit JSON tags
 
-# 处理断线恢复
+# 会话 token 替换
 
-* Handle reconnect and session recovery properly
+* New login invalidates prior session tokens for the same player
 
-# 禁止硬编码协议处理
+# handler 保持薄
 
-* Avoid hardcoded protocol handling
+* Parse JSON, validate session, call services; no business logic in handlers
 
-# 避免高频状态同步
+# 避免高频轮询
 
-* Avoid unnecessary high-frequency synchronization
+* Avoid unnecessary high-frequency polling; batch client actions when possible
 
-## Protobuf
+## HTTP API
 
-# 后端拥有协议定义权
+# 保持向后兼容
 
-* The backend owns protobuf definitions
-
-# 所有协议修改必须来自 proto 仓库
-
-* All protocol evolution must originate from the proto repository
-
-# 保持 protobuf 向后兼容
-
-* Keep protobuf backward-compatible
+* Prefer additive JSON fields; never reuse field meanings without version bump
 
 # 禁止 giant payload
 
-* Avoid giant universal payload messages
+* Avoid giant universal JSON blobs in responses
 
-# 保持协议显式清晰
+# 保持消息显式清晰
 
-* Keep protocol messages explicit and readable
+* Keep API types explicit in `internal/apitypes`
 
 # 避免过度嵌套结构
 
-* Avoid deeply nested protocol structures
+* Avoid deeply nested JSON without need
 
 ## Code Style
 

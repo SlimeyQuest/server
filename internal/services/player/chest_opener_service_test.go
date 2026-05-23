@@ -8,8 +8,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/slimeyquest/ent/enttest"
-	commonv1 "github.com/slimeyquest/proto/gen/go/common"
-	equipmentv1 "github.com/slimeyquest/proto/gen/go/equipment"
+	"github.com/slimeyquest/server/internal/apitypes"
 	"github.com/slimeyquest/server/internal/data/playerrepo"
 	"github.com/slimeyquest/server/internal/gameplayconfig"
 	"github.com/slimeyquest/server/internal/services/player"
@@ -49,14 +48,14 @@ func TestChestOpenConsumesStoredBoxesAndCreatesEquipment(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.GetError().GetCode() != commonv1.ErrorCode_ERROR_CODE_OK {
-		t.Fatalf("unexpected error: %v", res.GetError())
+	if apitypes.HasError(res.Error) {
+		t.Fatalf("unexpected error: %v", res.Error)
 	}
-	if len(res.GetEquipment()) != 2 {
-		t.Fatalf("expected 2 equipment items, got %d", len(res.GetEquipment()))
+	if len(res.Equipment) != 2 {
+		t.Fatalf("expected 2 equipment items, got %d", len(res.Equipment))
 	}
-	if res.GetRemainingBoxCount() != 0 {
-		t.Fatalf("expected no boxes remaining, got %d", res.GetRemainingBoxCount())
+	if res.RemainingBoxCount != 0 {
+		t.Fatalf("expected no boxes remaining, got %d", res.RemainingBoxCount)
 	}
 }
 
@@ -68,8 +67,8 @@ func TestChestOpenRejectsInsufficientBoxes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.GetError().GetCode() != commonv1.ErrorCode_ERROR_CODE_INVALID_REQUEST {
-		t.Fatalf("expected invalid request, got %v", res.GetError().GetCode())
+	if res.Error == nil || res.Error.Code != apitypes.ErrorCodeInvalidRequest {
+		t.Fatalf("expected invalid request, got %v", res.Error)
 	}
 }
 
@@ -84,8 +83,8 @@ func TestEquipItemAndDecomposeLifecycle(t *testing.T) {
 	}
 	inst := state.Equipment.AddInstance(gameplayconfig.DropRow{
 		ConfigID: 9001,
-		Rarity:   int32(commonv1.EquipmentRarity_EQUIPMENT_RARITY_RARE),
-		Slot:     int32(equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_HAT),
+		Rarity:   4,
+		Slot:     apitypes.SlotHat,
 		Attack:   10,
 		HP:       5,
 	})
@@ -93,27 +92,27 @@ func TestEquipItemAndDecomposeLifecycle(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	equipRes, err := svc.EquipItem(ctx, playerID, inst.UID, equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_UNSPECIFIED)
+	equipRes, err := svc.EquipItem(ctx, playerID, inst.UID, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if equipRes.GetError().GetCode() != commonv1.ErrorCode_ERROR_CODE_OK {
-		t.Fatalf("unexpected equip error: %v", equipRes.GetError())
+	if apitypes.HasError(equipRes.Error) {
+		t.Fatalf("unexpected equip error: %v", equipRes.Error)
 	}
 
 	decomposeEquipped, err := svc.DecomposeEquipment(ctx, playerID, inst.UID)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if decomposeEquipped.GetError().GetCode() != commonv1.ErrorCode_ERROR_CODE_INVALID_REQUEST {
-		t.Fatalf("expected equipped decompose rejection, got %v", decomposeEquipped.GetError().GetCode())
+	if decomposeEquipped.Error == nil || decomposeEquipped.Error.Code != apitypes.ErrorCodeInvalidRequest {
+		t.Fatalf("expected equipped decompose rejection, got %v", decomposeEquipped.Error)
 	}
 
 	state, err = repo.LoadProgress(ctx, playerID)
 	if err != nil {
 		t.Fatal(err)
 	}
-	delete(state.Equipment.Equipped, int32(equipmentv1.EquipmentSlot_EQUIPMENT_SLOT_HAT))
+	delete(state.Equipment.Equipped, apitypes.SlotHat)
 	if err := repo.SaveProgress(ctx, state); err != nil {
 		t.Fatal(err)
 	}
@@ -122,10 +121,10 @@ func TestEquipItemAndDecomposeLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if decomposeRes.GetError().GetCode() != commonv1.ErrorCode_ERROR_CODE_OK {
-		t.Fatalf("unexpected decompose error: %v", decomposeRes.GetError())
+	if apitypes.HasError(decomposeRes.Error) {
+		t.Fatalf("unexpected decompose error: %v", decomposeRes.Error)
 	}
-	if decomposeRes.GetGainedGold() <= 0 || decomposeRes.GetTotalGold() <= 0 {
+	if decomposeRes.GainedGold <= 0 || decomposeRes.TotalGold <= 0 {
 		t.Fatal("expected gained and total gold")
 	}
 }
@@ -148,11 +147,11 @@ func TestUpgradeChestUsesConfiguredGoldCost(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.GetError().GetCode() != commonv1.ErrorCode_ERROR_CODE_OK {
-		t.Fatalf("unexpected upgrade error: %v", res.GetError())
+	if apitypes.HasError(res.Error) {
+		t.Fatalf("unexpected upgrade error: %v", res.Error)
 	}
-	if res.GetChestLevel() != 2 {
-		t.Fatalf("expected chest level 2, got %d", res.GetChestLevel())
+	if res.ChestLevel != 2 {
+		t.Fatalf("expected chest level 2, got %d", res.ChestLevel)
 	}
 }
 
@@ -164,7 +163,7 @@ func TestDrawSkillAndCompanion(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(skillRes.GetRewards()) != 2 || skillRes.GetShopLevel() < 1 {
+	if len(skillRes.Rewards) != 2 || skillRes.ShopLevel < 1 {
 		t.Fatalf("unexpected skill draw result: %+v", skillRes)
 	}
 
@@ -172,7 +171,7 @@ func TestDrawSkillAndCompanion(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(companionRes.GetRewards()) != 2 || companionRes.GetShopLevel() < 1 {
+	if len(companionRes.Rewards) != 2 || companionRes.ShopLevel < 1 {
 		t.Fatalf("unexpected companion draw result: %+v", companionRes)
 	}
 }

@@ -1,4 +1,4 @@
-.PHONY: build run vet proto-lint proto-gen
+.PHONY: build run vet http-smoke
 
 build:
 	go build -o bin/server ./cmd/server
@@ -9,8 +9,5 @@ run: build
 vet:
 	go vet ./...
 
-proto-lint:
-	$(MAKE) -C ../proto proto-lint
-
-proto-gen:
-	$(MAKE) -C ../proto proto-gen
+http-smoke:
+	go run ./cmd/http-smoke
