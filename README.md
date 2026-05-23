@@ -43,7 +43,9 @@ Lightweight layered modular monolith backend for SlimeyQuest (HTTP JSON REST + P
    {"status":"ok","version":"dev","uptime":"1m2s"}
    ```
 
-   HTTP API documentation: [`../docs/api/http-v1.md`](../docs/api/http-v1.md)
+   HTTP API documentation: [`../docs/api/http-v1.md`](../docs/api/http-v1.md)（中文契约）
+
+   Architecture: [`../docs/architecture/`](../docs/architecture/) · MVP loop: [`../docs/chest-opener-loop.md`](../docs/chest-opener-loop.md)
 
 ## Project layout
 
