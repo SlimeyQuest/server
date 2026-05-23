@@ -7,23 +7,23 @@ import (
 
 	"github.com/slimeyquest/ent"
 	"github.com/slimeyquest/ent/player"
-	"github.com/slimeyquest/server/internal/gameplayconfig"
+	"github.com/slimeyquest/server/internal/config"
 	playersvc "github.com/slimeyquest/server/internal/services/player"
 )
 
 // Repository persists and loads players with ent.
 type Repository struct {
 	client *ent.Client
-	cfg    *gameplayconfig.Config
+	cfg    *config.GameplayConfig
 }
 
 // New creates a player repository.
-func New(client *ent.Client, cfg *gameplayconfig.Config) *Repository {
+func New(client *ent.Client, cfg *config.GameplayConfig) *Repository {
 	return &Repository{client: client, cfg: cfg}
 }
 
 // Cfg returns gameplay config used by the repository.
-func (r *Repository) Cfg() *gameplayconfig.Config {
+func (r *Repository) Cfg() *config.GameplayConfig {
 	return r.cfg
 }
 

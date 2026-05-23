@@ -1,12 +1,12 @@
-package apitypes
+package entity
 
 // Error codes for HTTP JSON responses.
 const (
-	ErrorCodeOK              = "OK"
-	ErrorCodeInvalidRequest  = "INVALID_REQUEST"
-	ErrorCodeUnauthorized    = "UNAUTHORIZED"
-	ErrorCodeNotFound        = "NOT_FOUND"
-	ErrorCodeInternal        = "INTERNAL"
+	ErrorCodeOK             = "OK"
+	ErrorCodeInvalidRequest = "INVALID_REQUEST"
+	ErrorCodeUnauthorized   = "UNAUTHORIZED"
+	ErrorCodeNotFound       = "NOT_FOUND"
+	ErrorCodeInternal       = "INTERNAL"
 )
 
 // ErrorInfo is the standard API error payload.

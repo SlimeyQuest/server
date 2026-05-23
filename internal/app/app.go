@@ -8,11 +8,10 @@ import (
 	"net/http"
 	"os"
 
+	httpapi "github.com/slimeyquest/server/internal/api"
 	"github.com/slimeyquest/server/internal/config"
 	"github.com/slimeyquest/server/internal/data/playerrepo"
 	"github.com/slimeyquest/server/internal/data/storage"
-	"github.com/slimeyquest/server/internal/gameplayconfig"
-	httpapi "github.com/slimeyquest/server/internal/interfaces/http"
 	"github.com/slimeyquest/server/internal/services/idle"
 	"github.com/slimeyquest/server/internal/services/login"
 	"github.com/slimeyquest/server/internal/services/player"
@@ -53,7 +52,7 @@ func New(ctx context.Context, cfg *config.Config, log *slog.Logger) (*App, error
 		return nil, fmt.Errorf("init ent: %w", err)
 	}
 
-	gameplayCfg, err := gameplayconfig.Load()
+	gameplayCfg, err := config.LoadGameplay()
 	if err != nil {
 		entClient.Close()
 		redis.Close()

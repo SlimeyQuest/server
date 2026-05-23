@@ -4,8 +4,8 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/slimeyquest/server/internal/apitypes"
-	"github.com/slimeyquest/server/internal/gameplayconfig"
+	"github.com/slimeyquest/server/internal/entity"
+	"github.com/slimeyquest/server/internal/config"
 	"github.com/slimeyquest/server/internal/services/player"
 	"github.com/slimeyquest/server/internal/services/reward"
 )
@@ -13,24 +13,24 @@ import (
 // Service handles stage progression.
 type Service struct {
 	log     *slog.Logger
-	cfg     *gameplayconfig.Config
+	cfg     *config.GameplayConfig
 	players player.Repository
 	rewards *reward.Service
 }
 
 // NewService creates a stage service.
-func NewService(log *slog.Logger, cfg *gameplayconfig.Config, players player.Repository, rewards *reward.Service) *Service {
+func NewService(log *slog.Logger, cfg *config.GameplayConfig, players player.Repository, rewards *reward.Service) *Service {
 	return &Service{log: log, cfg: cfg, players: players, rewards: rewards}
 }
 
 // BuildStageState returns the current stage snapshot for a player.
-func (s *Service) BuildStageState(state *player.ProgressState) *apitypes.StageState {
+func (s *Service) BuildStageState(state *player.ProgressState) *entity.StageState {
 	challengeFlat := ChallengeFlat(state.HighestStageCleared)
 	rec := s.cfg.RecommendedPower(challengeFlat)
 	isCleared := challengeFlat <= state.HighestStageCleared
 
-	milestones := make([]*apitypes.RewardBundle, 0)
-	for _, flat := range gameplayconfig.MilestoneFlats {
+	milestones := make([]*entity.RewardBundle, 0)
+	for _, flat := range config.MilestoneFlats {
 		if flat <= state.HighestStageCleared {
 			continue
 		}
@@ -42,13 +42,13 @@ func (s *Service) BuildStageState(state *player.ProgressState) *apitypes.StageSt
 			continue
 		}
 		milestones = append(milestones, reward.BundleFromGrants(
-			apitypes.RewardSourceStageMilestone,
+			entity.RewardSourceStageMilestone,
 			row.MilestoneGold,
 			nil,
 		))
 	}
 
-	return &apitypes.StageState{
+	return &entity.StageState{
 		AdventureID:            state.AdventureID,
 		StageIndex:             state.StageIndex,
 		HighestStageCleared:    state.HighestStageCleared,
@@ -59,14 +59,14 @@ func (s *Service) BuildStageState(state *player.ProgressState) *apitypes.StageSt
 }
 
 // PushStage attempts to clear the current stage target.
-func (s *Service) PushStage(ctx context.Context, playerID int64, targetStageIndex int32) (*apitypes.PushStageRes, error) {
+func (s *Service) PushStage(ctx context.Context, playerID int64, targetStageIndex int32) (*entity.PushStageRes, error) {
 	state, err := s.players.LoadProgress(ctx, playerID)
 	if err != nil {
 		return nil, err
 	}
 
 	if !IsCurrentTarget(state.AdventureID, state.StageIndex, targetStageIndex) {
-		return &apitypes.PushStageRes{
+		return &entity.PushStageRes{
 			Success:    false,
 			StageState: s.BuildStageState(state),
 		}, nil
@@ -74,7 +74,7 @@ func (s *Service) PushStage(ctx context.Context, playerID int64, targetStageInde
 
 	challengeFlat := FlatStage(state.AdventureID, state.StageIndex)
 	if !IsUnlocked(state.HighestStageCleared, challengeFlat) {
-		return &apitypes.PushStageRes{
+		return &entity.PushStageRes{
 			Success:    false,
 			StageState: s.BuildStageState(state),
 		}, nil
@@ -89,7 +89,7 @@ func (s *Service) PushStage(ctx context.Context, playerID int64, targetStageInde
 			"combat_power", combatPower,
 			"recommended", recommended,
 		)
-		return &apitypes.PushStageRes{
+		return &entity.PushStageRes{
 			Success:    false,
 			StageState: s.BuildStageState(state),
 		}, nil
@@ -97,21 +97,21 @@ func (s *Service) PushStage(ctx context.Context, playerID int64, targetStageInde
 
 	row, ok := s.cfg.Stage(challengeFlat)
 	if !ok {
-		return &apitypes.PushStageRes{
+		return &entity.PushStageRes{
 			Success:    false,
 			StageState: s.BuildStageState(state),
 		}, nil
 	}
 
 	firstClear := challengeFlat > state.HighestStageCleared
-	var milestoneBundle *apitypes.RewardBundle
-	var boxReward *apitypes.StageBoxReward
+	var milestoneBundle *entity.RewardBundle
+	var boxReward *entity.StageBoxReward
 	if firstClear {
 		goldReward := row.FirstClearGold
 		if goldReward > 0 {
 			if _, err := s.rewards.GrantInMemory(ctx, state, reward.ApplyRequest{
 				PlayerID:  playerID,
-				Source:    apitypes.RewardSourceStageClear,
+				Source:    entity.RewardSourceStageClear,
 				GoldDelta: goldReward,
 			}); err != nil {
 				return nil, err
@@ -128,21 +128,21 @@ func (s *Service) PushStage(ctx context.Context, playerID int64, targetStageInde
 
 		boxCount := s.stageBoxCount(playerID, challengeFlat)
 		state.AddBoxes(boxCount)
-		boxReward = &apitypes.StageBoxReward{
+		boxReward = &entity.StageBoxReward{
 			BoxCount:      boxCount,
 			TotalBoxCount: state.BoxCount(),
 		}
 
-		if gameplayconfig.IsMilestone(challengeFlat) && row.MilestoneGold > 0 && !state.HasClearedMilestone(challengeFlat) {
+		if config.IsMilestone(challengeFlat) && row.MilestoneGold > 0 && !state.HasClearedMilestone(challengeFlat) {
 			state.MarkMilestone(challengeFlat)
 			milestoneBundle = reward.BundleFromGrants(
-				apitypes.RewardSourceStageMilestone,
+				entity.RewardSourceStageMilestone,
 				row.MilestoneGold,
 				nil,
 			)
 			if _, err := s.rewards.GrantInMemory(ctx, state, reward.ApplyRequest{
 				PlayerID:  playerID,
-				Source:    apitypes.RewardSourceStageMilestone,
+				Source:    entity.RewardSourceStageMilestone,
 				GoldDelta: row.MilestoneGold,
 			}); err != nil {
 				return nil, err
@@ -159,7 +159,7 @@ func (s *Service) PushStage(ctx context.Context, playerID int64, targetStageInde
 		"flat_stage", challengeFlat,
 	)
 
-	return &apitypes.PushStageRes{
+	return &entity.PushStageRes{
 		Success:         true,
 		StageState:      s.BuildStageState(state),
 		MilestoneReward: milestoneBundle,

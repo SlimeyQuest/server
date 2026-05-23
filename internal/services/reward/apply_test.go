@@ -6,14 +6,14 @@ import (
 	"log/slog"
 	"testing"
 
-	"github.com/slimeyquest/server/internal/apitypes"
-	"github.com/slimeyquest/server/internal/gameplayconfig"
+	"github.com/slimeyquest/server/internal/entity"
+	"github.com/slimeyquest/server/internal/config"
 	"github.com/slimeyquest/server/internal/services/player"
 	"github.com/slimeyquest/server/internal/services/reward"
 )
 
 func TestApplyGold(t *testing.T) {
-	cfg, err := gameplayconfig.Load()
+	cfg, err := config.LoadGameplay()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -22,7 +22,7 @@ func TestApplyGold(t *testing.T) {
 	state := &player.ProgressState{PlayerID: 1, Gold: 10}
 	result, err := applier.Apply(context.Background(), state, reward.ApplyRequest{
 		PlayerID:  1,
-		Source:    apitypes.RewardSourceIdleClaim,
+		Source:    entity.RewardSourceIdleClaim,
 		GoldDelta: 25,
 	})
 	if err != nil {

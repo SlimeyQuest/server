@@ -1,4 +1,4 @@
-package apitypes
+package entity
 
 // GuestLoginReq authenticates a guest device.
 type GuestLoginReq struct {

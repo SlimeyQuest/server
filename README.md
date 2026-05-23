@@ -51,10 +51,12 @@ Lightweight layered modular monolith backend for SlimeyQuest (HTTP JSON REST + P
 cmd/server/                         Entry point
 cmd/http-smoke/                     HTTP API smoke test client
 internal/app/                       Application wiring and lifecycle
-internal/apitypes/                  JSON API request/response types
-internal/config/                    Environment configuration
+internal/entity/                    JSON API request/response types
+internal/config/                    Environment + embedded gameplay config
 internal/logger/                    Structured logging (slog)
-internal/interfaces/http/           Gin HTTP handlers and routing
+internal/api/                       Gin HTTP routing (domain handlers)
+internal/middleware/                Bearer auth middleware
+pkg/response/                       Unified JSON error responses
 internal/services/login/            Authentication and session flow
 internal/services/player/           Player domain, equipment, chest loop
 internal/services/idle/             Idle reward calculation and claims
@@ -63,7 +65,7 @@ internal/services/stage/            Stage progression
 internal/services/session/          In-memory session tokens
 internal/data/playerrepo/           ent-backed player repository
 internal/data/storage/              PostgreSQL, Redis, ent client
-internal/gameplayconfig/data/       Embedded gameplay CSV/YAML config
+internal/config/data/               Embedded gameplay CSV/YAML config
 ```
 
 ## API direction

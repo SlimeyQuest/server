@@ -1,4 +1,4 @@
-package apitypes
+package entity
 
 // Reward source identifiers.
 const (
@@ -9,8 +9,8 @@ const (
 
 // Reward type identifiers.
 const (
-	RewardTypeGold       = "GOLD"
-	RewardTypeEquipment  = "EQUIPMENT"
+	RewardTypeGold      = "GOLD"
+	RewardTypeEquipment = "EQUIPMENT"
 )
 
 // RewardItem is one grant entry in a bundle.

@@ -4,8 +4,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/slimeyquest/server/internal/apitypes"
-	"github.com/slimeyquest/server/internal/gameplayconfig"
+	"github.com/slimeyquest/server/internal/entity"
+	"github.com/slimeyquest/server/internal/config"
 	"github.com/slimeyquest/server/internal/services/player"
 	"github.com/slimeyquest/server/internal/services/reward"
 )
@@ -37,7 +37,7 @@ func AccumulatedSeconds(lastClaim, now time.Time, capHours float64) int64 {
 }
 
 // ComputePreview calculates idle rewards without mutating state.
-func ComputePreview(state *player.ProgressState, cfg *gameplayconfig.Config, now time.Time) Preview {
+func ComputePreview(state *player.ProgressState, cfg *config.GameplayConfig, now time.Time) Preview {
 	start := state.ClaimBaseline()
 	end := now
 	seconds := AccumulatedSeconds(start, end, cfg.Globals.OfflineCapHours)
@@ -74,12 +74,12 @@ func ComputePreview(state *player.ProgressState, cfg *gameplayconfig.Config, now
 }
 
 // PreviewBundle builds a read-only gold preview bundle for login UI.
-func PreviewBundle(preview Preview) *apitypes.RewardBundle {
-	return reward.BundleFromGrants(apitypes.RewardSourceIdleClaim, preview.GoldTotal, nil)
+func PreviewBundle(preview Preview) *entity.RewardBundle {
+	return reward.BundleFromGrants(entity.RewardSourceIdleClaim, preview.GoldTotal, nil)
 }
 
 // ClaimGrants builds explicit equipment grants for a claim.
-func ClaimGrants(state *player.ProgressState, cfg *gameplayconfig.Config, preview Preview) []reward.EquipmentGrant {
+func ClaimGrants(state *player.ProgressState, cfg *config.GameplayConfig, preview Preview) []reward.EquipmentGrant {
 	grants := make([]reward.EquipmentGrant, 0, preview.EquipmentRolls)
 	for i := int64(0); i < preview.EquipmentRolls; i++ {
 		seed := state.PlayerID*1000 + preview.OfflineSeconds + i

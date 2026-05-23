@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/slimeyquest/server/internal/apitypes"
-	"github.com/slimeyquest/server/internal/gameplayconfig"
+	"github.com/slimeyquest/server/internal/entity"
+	"github.com/slimeyquest/server/internal/config"
 	"github.com/slimeyquest/server/internal/services/player"
 	"github.com/slimeyquest/server/internal/services/reward"
 )
@@ -16,18 +16,18 @@ const claimTimeToleranceMs = 120_000
 // Service handles idle reward preview and claims.
 type Service struct {
 	log     *slog.Logger
-	cfg     *gameplayconfig.Config
+	cfg     *config.GameplayConfig
 	players player.Repository
 	rewards *reward.Service
 }
 
 // NewService creates an idle service.
-func NewService(log *slog.Logger, cfg *gameplayconfig.Config, players player.Repository, rewards *reward.Service) *Service {
+func NewService(log *slog.Logger, cfg *config.GameplayConfig, players player.Repository, rewards *reward.Service) *Service {
 	return &Service{log: log, cfg: cfg, players: players, rewards: rewards}
 }
 
 // Claim settles idle rewards for the player.
-func (s *Service) Claim(ctx context.Context, playerID int64, claimedThroughMs int64) (*apitypes.ClaimIdleRewardsRes, error) {
+func (s *Service) Claim(ctx context.Context, playerID int64, claimedThroughMs int64) (*entity.ClaimIdleRewardsRes, error) {
 	state, err := s.players.LoadProgress(ctx, playerID)
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func (s *Service) Claim(ctx context.Context, playerID int64, claimedThroughMs in
 	grants := ClaimGrants(state, s.cfg, preview)
 	applyReq := reward.ApplyRequest{
 		PlayerID:        playerID,
-		Source:          apitypes.RewardSourceIdleClaim,
+		Source:          entity.RewardSourceIdleClaim,
 		GoldDelta:       preview.GoldTotal,
 		EquipmentGrants: grants,
 	}
@@ -71,7 +71,7 @@ func (s *Service) Claim(ctx context.Context, playerID int64, claimedThroughMs in
 	freshPreview := ComputePreview(result.State, s.cfg, now)
 	idleState := BuildIdleState(freshPreview, PreviewBundle(freshPreview), profile)
 
-	return &apitypes.ClaimIdleRewardsRes{
+	return &entity.ClaimIdleRewardsRes{
 		Success:       true,
 		ClaimedReward: result.AppliedBundle,
 		IdleState:     idleState,

@@ -1,16 +1,16 @@
 package player
 
 import (
-	"github.com/slimeyquest/server/internal/apitypes"
-	"github.com/slimeyquest/server/internal/gameplayconfig"
+	"github.com/slimeyquest/server/internal/entity"
+	"github.com/slimeyquest/server/internal/config"
 )
 
 // ToProfile maps ProgressState into an API player profile.
-func ToProfile(state *ProgressState, cfg *gameplayconfig.Config) *apitypes.PlayerProfile {
+func ToProfile(state *ProgressState, cfg *config.GameplayConfig) *entity.PlayerProfile {
 	if state == nil {
-		return &apitypes.PlayerProfile{}
+		return &entity.PlayerProfile{}
 	}
-	return &apitypes.PlayerProfile{
+	return &entity.PlayerProfile{
 		PlayerID:            state.PlayerID,
 		DisplayName:         state.DisplayName,
 		Gold:                state.Gold,
@@ -22,12 +22,12 @@ func ToProfile(state *ProgressState, cfg *gameplayconfig.Config) *apitypes.Playe
 		EquippedSlots:       state.Equipment.EquippedSlotsAPI(),
 		CreatedAtMs:         state.CreatedAt.UnixMilli(),
 		LastLoginAtMs:       lastLoginAtMs(state),
-		HeroClass:           apitypes.HeroClassWarrior,
+		HeroClass:           entity.HeroClassWarrior,
 		HeroLevel:           state.Level,
 		ZoneID:              TestZoneID,
-		ProfessionSkill:     &apitypes.SkillInfo{SkillID: 1, Name: "Warrior Strike", Quality: 1},
-		EquippedSkills:      []apitypes.SkillInfo{},
-		Companions:          []apitypes.CompanionInfo{},
+		ProfessionSkill:     &entity.SkillInfo{SkillID: 1, Name: "Warrior Strike", Quality: 1},
+		EquippedSkills:      []entity.SkillInfo{},
+		Companions:          []entity.CompanionInfo{},
 		ChestLevel:          state.ChestLevel(),
 		BoxCount:            state.BoxCount(),
 	}

@@ -5,19 +5,19 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/slimeyquest/server/internal/apitypes"
-	"github.com/slimeyquest/server/internal/gameplayconfig"
+	"github.com/slimeyquest/server/internal/entity"
+	"github.com/slimeyquest/server/internal/config"
 	"github.com/slimeyquest/server/internal/services/player"
 )
 
 // Applier applies explicit reward grants to player state.
 type Applier struct {
 	log *slog.Logger
-	cfg *gameplayconfig.Config
+	cfg *config.GameplayConfig
 }
 
 // NewApplier creates a reward applier.
-func NewApplier(log *slog.Logger, cfg *gameplayconfig.Config) *Applier {
+func NewApplier(log *slog.Logger, cfg *config.GameplayConfig) *Applier {
 	return &Applier{log: log, cfg: cfg}
 }
 
@@ -30,11 +30,11 @@ func (a *Applier) Apply(ctx context.Context, state *player.ProgressState, req Ap
 		return nil, fmt.Errorf("apply reward: unspecified source")
 	}
 
-	bundle := &apitypes.RewardBundle{Source: req.Source}
+	bundle := &entity.RewardBundle{Source: req.Source}
 	if req.GoldDelta > 0 {
 		state.Gold += req.GoldDelta
-		bundle.Items = append(bundle.Items, apitypes.RewardItem{
-			Type: apitypes.RewardTypeGold,
+		bundle.Items = append(bundle.Items, entity.RewardItem{
+			Type: entity.RewardTypeGold,
 			Gold: req.GoldDelta,
 		})
 	}
@@ -43,7 +43,7 @@ func (a *Applier) Apply(ctx context.Context, state *player.ProgressState, req Ap
 	for _, grant := range req.EquipmentGrants {
 		row := a.cfg.StarterWeapon
 		if grant.ConfigID != 0 {
-			row = gameplayconfig.DropRow{
+			row = config.DropRow{
 				ConfigID:       grant.ConfigID,
 				Rarity:         grant.Rarity,
 				Slot:           grant.Slot,
@@ -55,8 +55,8 @@ func (a *Applier) Apply(ctx context.Context, state *player.ProgressState, req Ap
 		inst := state.Equipment.AddInstance(row)
 		equipCount++
 		eq := inst.ToAPI()
-		bundle.Items = append(bundle.Items, apitypes.RewardItem{
-			Type:      apitypes.RewardTypeEquipment,
+		bundle.Items = append(bundle.Items, entity.RewardItem{
+			Type:      entity.RewardTypeEquipment,
 			Equipment: &eq,
 		})
 	}
@@ -75,18 +75,18 @@ func (a *Applier) Apply(ctx context.Context, state *player.ProgressState, req Ap
 }
 
 // BundleFromGrants builds a bundle without applying (for previews).
-func BundleFromGrants(source string, gold int64, instances []player.EquipmentInstance) *apitypes.RewardBundle {
-	bundle := &apitypes.RewardBundle{Source: source}
+func BundleFromGrants(source string, gold int64, instances []player.EquipmentInstance) *entity.RewardBundle {
+	bundle := &entity.RewardBundle{Source: source}
 	if gold > 0 {
-		bundle.Items = append(bundle.Items, apitypes.RewardItem{
-			Type: apitypes.RewardTypeGold,
+		bundle.Items = append(bundle.Items, entity.RewardItem{
+			Type: entity.RewardTypeGold,
 			Gold: gold,
 		})
 	}
 	for _, inst := range instances {
 		eq := inst.ToAPI()
-		bundle.Items = append(bundle.Items, apitypes.RewardItem{
-			Type:      apitypes.RewardTypeEquipment,
+		bundle.Items = append(bundle.Items, entity.RewardItem{
+			Type:      entity.RewardTypeEquipment,
 			Equipment: &eq,
 		})
 	}
@@ -94,7 +94,7 @@ func BundleFromGrants(source string, gold int64, instances []player.EquipmentIns
 }
 
 // GrantsFromDrop builds equipment grants from config drop rows.
-func GrantsFromDrop(rows []gameplayconfig.DropRow) []EquipmentGrant {
+func GrantsFromDrop(rows []config.DropRow) []EquipmentGrant {
 	grants := make([]EquipmentGrant, 0, len(rows))
 	for _, row := range rows {
 		grants = append(grants, EquipmentGrant{

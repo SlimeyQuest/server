@@ -11,13 +11,13 @@ import (
 
 	"github.com/slimeyquest/ent/enttest"
 	"github.com/slimeyquest/server/internal/data/playerrepo"
-	"github.com/slimeyquest/server/internal/gameplayconfig"
+	"github.com/slimeyquest/server/internal/config"
 	"github.com/slimeyquest/server/internal/services/reward"
 	"github.com/slimeyquest/server/internal/services/stage"
 )
 
 func TestPushStageGrantsConfiguredBoxReward(t *testing.T) {
-	cfg, err := gameplayconfig.Load()
+	cfg, err := config.LoadGameplay()
 	if err != nil {
 		t.Fatal(err)
 	}

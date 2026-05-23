@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/slimeyquest/server/internal/gameplayconfig"
+	"github.com/slimeyquest/server/internal/config"
 	"github.com/slimeyquest/server/internal/services/idle"
 	"github.com/slimeyquest/server/internal/services/player"
 )
@@ -19,7 +19,7 @@ func TestAccumulatedSecondsCap(t *testing.T) {
 }
 
 func TestComputePreviewGold(t *testing.T) {
-	cfg, err := gameplayconfig.Load()
+	cfg, err := config.LoadGameplay()
 	if err != nil {
 		t.Fatal(err)
 	}

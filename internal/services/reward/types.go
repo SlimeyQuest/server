@@ -1,7 +1,7 @@
 package reward
 
 import (
-	"github.com/slimeyquest/server/internal/apitypes"
+	"github.com/slimeyquest/server/internal/entity"
 	"github.com/slimeyquest/server/internal/services/player"
 )
 
@@ -26,5 +26,5 @@ type ApplyRequest struct {
 // ApplyResult is the updated player state after applying rewards.
 type ApplyResult struct {
 	State         *player.ProgressState
-	AppliedBundle *apitypes.RewardBundle
+	AppliedBundle *entity.RewardBundle
 }

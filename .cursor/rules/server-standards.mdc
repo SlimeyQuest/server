@@ -187,9 +187,9 @@ alwaysApply: true
 
 * Use `/api/v1` JSON REST for gameplay; Bearer tokens for authenticated routes
 
-# 类型定义在 apitypes
+# 类型定义在 entity
 
-* Define request/response structs in `internal/apitypes` with explicit JSON tags
+* Define request/response structs in `internal/entity` with explicit JSON tags
 
 # 会话 token 替换
 
@@ -215,7 +215,7 @@ alwaysApply: true
 
 # 保持消息显式清晰
 
-* Keep API types explicit in `internal/apitypes`
+* Keep API types explicit in `internal/entity`
 
 # 避免过度嵌套结构
 

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/slimeyquest/ent"
-	"github.com/slimeyquest/server/internal/apitypes"
+	"github.com/slimeyquest/server/internal/entity"
 	"github.com/slimeyquest/server/internal/services/idle"
 	"github.com/slimeyquest/server/internal/services/player"
 	"github.com/slimeyquest/server/internal/services/session"
@@ -48,14 +48,14 @@ func NewService(
 }
 
 // GuestLogin authenticates a guest and returns a login response.
-func (s *Service) GuestLogin(ctx context.Context, req *apitypes.GuestLoginReq) (*apitypes.AuthResponse, *AuthResult) {
+func (s *Service) GuestLogin(ctx context.Context, req *entity.GuestLoginReq) (*entity.AuthResponse, *AuthResult) {
 	if req == nil {
-		return authError(apitypes.ErrorCodeInvalidRequest, "missing guest login payload"), nil
+		return authError(entity.ErrorCodeInvalidRequest, "missing guest login payload"), nil
 	}
 	clientVersion := req.ClientVersion
 	externalID := req.DeviceID
 	if externalID == "" {
-		return authError(apitypes.ErrorCodeInvalidRequest, "device_id is required"), nil
+		return authError(entity.ErrorCodeInvalidRequest, "device_id is required"), nil
 	}
 
 	p, created, err := s.loadOrCreatePlayer(ctx, PlatformGuest, externalID)
@@ -66,7 +66,7 @@ func (s *Service) GuestLogin(ctx context.Context, req *apitypes.GuestLoginReq) (
 			"client_version", clientVersion,
 			"error", err,
 		)
-		return authError(apitypes.ErrorCodeInternal, "internal error"), nil
+		return authError(entity.ErrorCodeInternal, "internal error"), nil
 	}
 
 	p, err = s.players.RecordLogin(ctx, p.ID)
@@ -78,13 +78,13 @@ func (s *Service) GuestLogin(ctx context.Context, req *apitypes.GuestLoginReq) (
 			"client_version", clientVersion,
 			"error", err,
 		)
-		return authError(apitypes.ErrorCodeInternal, "internal error"), nil
+		return authError(entity.ErrorCodeInternal, "internal error"), nil
 	}
 
 	return s.finishLogin(ctx, p, created, PlatformGuest, externalID, clientVersion)
 }
 
-func (s *Service) finishLogin(ctx context.Context, p *ent.Player, created bool, platform, externalID, clientVersion string) (*apitypes.AuthResponse, *AuthResult) {
+func (s *Service) finishLogin(ctx context.Context, p *ent.Player, created bool, platform, externalID, clientVersion string) (*entity.AuthResponse, *AuthResult) {
 	state := player.FromEntity(p)
 	now := time.Now().UTC()
 	profile := player.ToProfile(state, s.players.Cfg())
@@ -130,7 +130,7 @@ func (s *Service) finishLogin(ctx context.Context, p *ent.Player, created bool, 
 		"created", created,
 	)
 
-	return &apitypes.AuthResponse{
+	return &entity.AuthResponse{
 			SessionToken: newSession.Token,
 			PlayerID:     playerID,
 			Profile:      profile,
@@ -158,17 +158,17 @@ func (s *Service) loadOrCreatePlayer(ctx context.Context, platform, externalID s
 	return p, true, nil
 }
 
-func authError(code, message string) *apitypes.AuthResponse {
-	return &apitypes.AuthResponse{Error: apitypes.Err(code, message)}
+func authError(code, message string) *entity.AuthResponse {
+	return &entity.AuthResponse{Error: entity.Err(code, message)}
 }
 
 // IsSuccess reports whether a login response represents success.
-func IsSuccess(res *apitypes.AuthResponse) bool {
-	return res != nil && !apitypes.HasError(res.Error)
+func IsSuccess(res *entity.AuthResponse) bool {
+	return res != nil && !entity.HasError(res.Error)
 }
 
 // ValidateResponse returns an error for failed login responses.
-func ValidateResponse(res *apitypes.AuthResponse) error {
+func ValidateResponse(res *entity.AuthResponse) error {
 	if IsSuccess(res) {
 		return nil
 	}

@@ -1,4 +1,4 @@
-package apitypes
+package entity
 
 // StageState is the current stage progression snapshot.
 type StageState struct {

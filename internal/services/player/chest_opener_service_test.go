@@ -8,15 +8,15 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/slimeyquest/ent/enttest"
-	"github.com/slimeyquest/server/internal/apitypes"
 	"github.com/slimeyquest/server/internal/data/playerrepo"
-	"github.com/slimeyquest/server/internal/gameplayconfig"
+	"github.com/slimeyquest/server/internal/entity"
+	"github.com/slimeyquest/server/internal/config"
 	"github.com/slimeyquest/server/internal/services/player"
 )
 
 func newChestOpenerTestRepo(t *testing.T) (player.Repository, int64) {
 	t.Helper()
-	cfg, err := gameplayconfig.Load()
+	cfg, err := config.LoadGameplay()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -48,7 +48,7 @@ func TestChestOpenConsumesStoredBoxesAndCreatesEquipment(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if apitypes.HasError(res.Error) {
+	if entity.HasError(res.Error) {
 		t.Fatalf("unexpected error: %v", res.Error)
 	}
 	if len(res.Equipment) != 2 {
@@ -67,7 +67,7 @@ func TestChestOpenRejectsInsufficientBoxes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Error == nil || res.Error.Code != apitypes.ErrorCodeInvalidRequest {
+	if res.Error == nil || res.Error.Code != entity.ErrorCodeInvalidRequest {
 		t.Fatalf("expected invalid request, got %v", res.Error)
 	}
 }
@@ -81,10 +81,10 @@ func TestEquipItemAndDecomposeLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	inst := state.Equipment.AddInstance(gameplayconfig.DropRow{
+	inst := state.Equipment.AddInstance(config.DropRow{
 		ConfigID: 9001,
 		Rarity:   4,
-		Slot:     apitypes.SlotHat,
+		Slot:     entity.SlotHat,
 		Attack:   10,
 		HP:       5,
 	})
@@ -96,7 +96,7 @@ func TestEquipItemAndDecomposeLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if apitypes.HasError(equipRes.Error) {
+	if entity.HasError(equipRes.Error) {
 		t.Fatalf("unexpected equip error: %v", equipRes.Error)
 	}
 
@@ -104,7 +104,7 @@ func TestEquipItemAndDecomposeLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if decomposeEquipped.Error == nil || decomposeEquipped.Error.Code != apitypes.ErrorCodeInvalidRequest {
+	if decomposeEquipped.Error == nil || decomposeEquipped.Error.Code != entity.ErrorCodeInvalidRequest {
 		t.Fatalf("expected equipped decompose rejection, got %v", decomposeEquipped.Error)
 	}
 
@@ -112,7 +112,7 @@ func TestEquipItemAndDecomposeLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	delete(state.Equipment.Equipped, apitypes.SlotHat)
+	delete(state.Equipment.Equipped, entity.SlotHat)
 	if err := repo.SaveProgress(ctx, state); err != nil {
 		t.Fatal(err)
 	}
@@ -121,7 +121,7 @@ func TestEquipItemAndDecomposeLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if apitypes.HasError(decomposeRes.Error) {
+	if entity.HasError(decomposeRes.Error) {
 		t.Fatalf("unexpected decompose error: %v", decomposeRes.Error)
 	}
 	if decomposeRes.GainedGold <= 0 || decomposeRes.TotalGold <= 0 {
@@ -147,7 +147,7 @@ func TestUpgradeChestUsesConfiguredGoldCost(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if apitypes.HasError(res.Error) {
+	if entity.HasError(res.Error) {
 		t.Fatalf("unexpected upgrade error: %v", res.Error)
 	}
 	if res.ChestLevel != 2 {

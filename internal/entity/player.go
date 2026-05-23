@@ -1,4 +1,4 @@
-package apitypes
+package entity
 
 // Hero class identifiers.
 const (
@@ -21,25 +21,25 @@ type CompanionInfo struct {
 
 // PlayerProfile is the player snapshot returned by login and gameplay APIs.
 type PlayerProfile struct {
-	PlayerID            int64          `json:"playerId"`
-	DisplayName         string         `json:"displayName"`
-	Gold                int64          `json:"gold"`
-	Gems                int64          `json:"gems"`
-	CombatPower         int64          `json:"combatPower"`
-	AdventureID         int32          `json:"adventureId"`
-	StageIndex          int32          `json:"stageIndex"`
-	HighestStageCleared int32          `json:"highestStageCleared"`
-	EquippedSlots       []EquippedSlot `json:"equippedSlots,omitempty"`
-	CreatedAtMs         int64          `json:"createdAtMs"`
-	LastLoginAtMs       int64          `json:"lastLoginAtMs"`
-	HeroClass           string         `json:"heroClass"`
-	HeroLevel           int32          `json:"heroLevel"`
-	ZoneID              int32          `json:"zoneId"`
-	ProfessionSkill     *SkillInfo     `json:"professionSkill,omitempty"`
-	EquippedSkills      []SkillInfo    `json:"equippedSkills,omitempty"`
+	PlayerID            int64           `json:"playerId"`
+	DisplayName         string          `json:"displayName"`
+	Gold                int64           `json:"gold"`
+	Gems                int64           `json:"gems"`
+	CombatPower         int64           `json:"combatPower"`
+	AdventureID         int32           `json:"adventureId"`
+	StageIndex          int32           `json:"stageIndex"`
+	HighestStageCleared int32           `json:"highestStageCleared"`
+	EquippedSlots       []EquippedSlot  `json:"equippedSlots,omitempty"`
+	CreatedAtMs         int64           `json:"createdAtMs"`
+	LastLoginAtMs       int64           `json:"lastLoginAtMs"`
+	HeroClass           string          `json:"heroClass"`
+	HeroLevel           int32           `json:"heroLevel"`
+	ZoneID              int32           `json:"zoneId"`
+	ProfessionSkill     *SkillInfo      `json:"professionSkill,omitempty"`
+	EquippedSkills      []SkillInfo     `json:"equippedSkills,omitempty"`
 	Companions          []CompanionInfo `json:"companions,omitempty"`
-	ChestLevel          int32          `json:"chestLevel"`
-	BoxCount            int32          `json:"boxCount"`
+	ChestLevel          int32           `json:"chestLevel"`
+	BoxCount            int32           `json:"boxCount"`
 }
 
 // CreateRoleReq updates the display name.
@@ -72,7 +72,7 @@ type DrawCompanionReq struct {
 
 // DrawCompanionRes returns drawn companions.
 type DrawCompanionRes struct {
-	Error     *ErrorInfo        `json:"error,omitempty"`
-	Rewards   []CompanionInfo   `json:"rewards,omitempty"`
-	ShopLevel int32             `json:"shopLevel"`
+	Error     *ErrorInfo      `json:"error,omitempty"`
+	Rewards   []CompanionInfo `json:"rewards,omitempty"`
+	ShopLevel int32           `json:"shopLevel"`
 }

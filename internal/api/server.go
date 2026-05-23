@@ -1,4 +1,4 @@
-package httpapi
+package api
 
 import (
 	"context"
@@ -7,13 +7,17 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-
+	"github.com/slimeyquest/server/internal/api/auth"
+	idleapi "github.com/slimeyquest/server/internal/api/idle"
+	"github.com/slimeyquest/server/internal/api/player"
+	"github.com/slimeyquest/server/internal/api/stage"
 	"github.com/slimeyquest/server/internal/config"
-	"github.com/slimeyquest/server/internal/services/idle"
+	"github.com/slimeyquest/server/internal/middleware"
+	idleSvc "github.com/slimeyquest/server/internal/services/idle"
 	"github.com/slimeyquest/server/internal/services/login"
-	"github.com/slimeyquest/server/internal/services/player"
+	playerSvc "github.com/slimeyquest/server/internal/services/player"
 	"github.com/slimeyquest/server/internal/services/session"
-	"github.com/slimeyquest/server/internal/services/stage"
+	stageSvc "github.com/slimeyquest/server/internal/services/stage"
 )
 
 type healthResponse struct {
@@ -24,15 +28,15 @@ type healthResponse struct {
 
 // Server exposes the HTTP REST API.
 type Server struct {
-	cfg      *config.Config
-	log      *slog.Logger
-	login    *login.Service
-	idle     *idle.Service
-	stage    *stage.Service
-	loop     *player.ClosedLoopService
-	sessions *session.Manager
-	engine   *gin.Engine
-	http     *http.Server
+	cfg       *config.Config
+	log       *slog.Logger
+	login     *login.Service
+	idle      *idleSvc.Service
+	stage     *stageSvc.Service
+	loop      *playerSvc.ClosedLoopService
+	sessions  *session.Manager
+	engine    *gin.Engine
+	http      *http.Server
 	startTime time.Time
 }
 
@@ -41,9 +45,9 @@ func NewServer(
 	cfg *config.Config,
 	log *slog.Logger,
 	loginSvc *login.Service,
-	idleSvc *idle.Service,
-	stageSvc *stage.Service,
-	loopSvc *player.ClosedLoopService,
+	idleService *idleSvc.Service,
+	stageService *stageSvc.Service,
+	loopSvc *playerSvc.ClosedLoopService,
 	sessions *session.Manager,
 ) *Server {
 	if !cfg.IsDevelopment() {
@@ -54,8 +58,8 @@ func NewServer(
 		cfg:       cfg,
 		log:       log,
 		login:     loginSvc,
-		idle:      idleSvc,
-		stage:     stageSvc,
+		idle:      idleService,
+		stage:     stageService,
 		loop:      loopSvc,
 		sessions:  sessions,
 		startTime: time.Now(),
@@ -70,25 +74,13 @@ func (s *Server) registerRoutes() {
 	s.engine.GET("/health", s.handleHealth)
 
 	v1 := s.engine.Group("/api/v1")
-	{
-		v1.POST("/auth/guest-login", s.handleGuestLogin)
-		v1.POST("/auth/phone-register", s.handlePhoneRegister)
-		v1.POST("/auth/phone-login", s.handlePhoneLogin)
+	auth.Register(v1, auth.NewHandler(s.login))
 
-		authed := v1.Group("")
-		authed.Use(AuthMiddleware(s.sessions))
-		{
-			authed.POST("/idle/claim", s.handleClaimIdle)
-			authed.POST("/stages/push", s.handlePushStage)
-			authed.POST("/player/role", s.handleCreateRole)
-			authed.POST("/equipment/chests/open", s.handleChestOpen)
-			authed.POST("/equipment/decompose", s.handleDecomposeEquipment)
-			authed.POST("/equipment/chests/upgrade", s.handleUpgradeChest)
-			authed.POST("/equipment/equip", s.handleEquipItem)
-			authed.POST("/skills/draw", s.handleDrawSkill)
-			authed.POST("/companions/draw", s.handleDrawCompanion)
-		}
-	}
+	authed := v1.Group("")
+	authed.Use(middleware.AuthMiddleware(s.sessions))
+	idleapi.Register(authed, idleapi.NewHandler(s.idle, s.sessions, s.log))
+	stage.Register(authed, stage.NewHandler(s.stage, s.sessions, s.log))
+	player.Register(authed, player.NewHandler(s.loop, s.sessions, s.log))
 }
 
 func (s *Server) handleHealth(c *gin.Context) {

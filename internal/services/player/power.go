@@ -1,9 +1,9 @@
 package player
 
-import "github.com/slimeyquest/server/internal/gameplayconfig"
+import "github.com/slimeyquest/server/internal/config"
 
 // ComputeCombatPower returns deterministic combat power from level and equipment.
-func ComputeCombatPower(state *ProgressState, cfg *gameplayconfig.Config) int64 {
+func ComputeCombatPower(state *ProgressState, cfg *config.GameplayConfig) int64 {
 	if state == nil || cfg == nil {
 		return 0
 	}

@@ -1,4 +1,4 @@
-package apitypes
+package entity
 
 import "strings"
 
@@ -116,9 +116,9 @@ type ChestOpenReq struct {
 
 // ChestOpenRes returns opened equipment.
 type ChestOpenRes struct {
-	Error             *ErrorInfo       `json:"error,omitempty"`
-	Equipment         []EquipmentInfo  `json:"equipment,omitempty"`
-	RemainingBoxCount int32            `json:"remainingBoxCount"`
+	Error             *ErrorInfo      `json:"error,omitempty"`
+	Equipment         []EquipmentInfo `json:"equipment,omitempty"`
+	RemainingBoxCount int32           `json:"remainingBoxCount"`
 }
 
 // EquipItemReq equips an item.
@@ -141,9 +141,9 @@ type DecomposeEquipmentReq struct {
 
 // DecomposeEquipmentRes returns gold gained.
 type DecomposeEquipmentRes struct {
-	Error     *ErrorInfo `json:"error,omitempty"`
-	GainedGold int64     `json:"gainedGold"`
-	TotalGold  int64     `json:"totalGold"`
+	Error      *ErrorInfo `json:"error,omitempty"`
+	GainedGold int64      `json:"gainedGold"`
+	TotalGold  int64      `json:"totalGold"`
 }
 
 // UpgradeChestReq upgrades chest opener level.

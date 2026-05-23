@@ -5,21 +5,21 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/slimeyquest/server/internal/apitypes"
-	"github.com/slimeyquest/server/internal/gameplayconfig"
+	"github.com/slimeyquest/server/internal/entity"
+	"github.com/slimeyquest/server/internal/config"
 	"github.com/slimeyquest/server/internal/services/player"
 )
 
 // Service grants rewards and persists player state.
 type Service struct {
 	log     *slog.Logger
-	cfg     *gameplayconfig.Config
+	cfg     *config.GameplayConfig
 	players player.Repository
 	applier *Applier
 }
 
 // NewService creates a reward service.
-func NewService(log *slog.Logger, cfg *gameplayconfig.Config, players player.Repository) *Service {
+func NewService(log *slog.Logger, cfg *config.GameplayConfig, players player.Repository) *Service {
 	return &Service{
 		log:     log,
 		cfg:     cfg,
@@ -50,7 +50,7 @@ func (s *Service) GrantInMemory(ctx context.Context, state *player.ProgressState
 }
 
 // GrantBundle maps a reward bundle into ApplyRequest and grants it.
-func (s *Service) GrantBundle(ctx context.Context, playerID int64, bundle *apitypes.RewardBundle) (*ApplyResult, error) {
+func (s *Service) GrantBundle(ctx context.Context, playerID int64, bundle *entity.RewardBundle) (*ApplyResult, error) {
 	if bundle == nil {
 		return nil, fmt.Errorf("grant bundle: nil bundle")
 	}
@@ -60,9 +60,9 @@ func (s *Service) GrantBundle(ctx context.Context, playerID int64, bundle *apity
 	}
 	for _, item := range bundle.Items {
 		switch item.Type {
-		case apitypes.RewardTypeGold:
+		case entity.RewardTypeGold:
 			req.GoldDelta += item.Gold
-		case apitypes.RewardTypeEquipment:
+		case entity.RewardTypeEquipment:
 			if item.Equipment == nil {
 				continue
 			}
@@ -72,7 +72,7 @@ func (s *Service) GrantBundle(ctx context.Context, playerID int64, bundle *apity
 				ConfigID: eq.ConfigID,
 				Rarity:   eq.Rarity,
 			}
-			slot, ok := apitypes.ParseEquipmentSlot(eq.Slot)
+			slot, ok := entity.ParseEquipmentSlot(eq.Slot)
 			if ok {
 				grant.Slot = slot
 			}

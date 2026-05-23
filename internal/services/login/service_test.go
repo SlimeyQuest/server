@@ -11,9 +11,9 @@ import (
 
 	"github.com/slimeyquest/ent"
 	"github.com/slimeyquest/ent/enttest"
-	"github.com/slimeyquest/server/internal/apitypes"
 	"github.com/slimeyquest/server/internal/data/playerrepo"
-	"github.com/slimeyquest/server/internal/gameplayconfig"
+	"github.com/slimeyquest/server/internal/entity"
+	"github.com/slimeyquest/server/internal/config"
 	"github.com/slimeyquest/server/internal/services/idle"
 	"github.com/slimeyquest/server/internal/services/login"
 	"github.com/slimeyquest/server/internal/services/player"
@@ -24,7 +24,7 @@ import (
 
 func newTestLoginService(t *testing.T, client *ent.Client) *login.Service {
 	t.Helper()
-	cfg, err := gameplayconfig.Load()
+	cfg, err := config.LoadGameplay()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,7 +44,7 @@ func TestGuestLoginCreatesAndResumesPlayer(t *testing.T) {
 	svc := newTestLoginService(t, client)
 	ctx := context.Background()
 
-	res, auth := svc.GuestLogin(ctx, &apitypes.GuestLoginReq{
+	res, auth := svc.GuestLogin(ctx, &entity.GuestLoginReq{
 		DeviceID:      "device-a",
 		ClientVersion: "1.0.0",
 	})
@@ -67,7 +67,7 @@ func TestGuestLoginCreatesAndResumesPlayer(t *testing.T) {
 		t.Fatalf("expected starter combat power, got %d", res.Profile.CombatPower)
 	}
 
-	res2, auth2 := svc.GuestLogin(ctx, &apitypes.GuestLoginReq{DeviceID: "device-a"})
+	res2, auth2 := svc.GuestLogin(ctx, &entity.GuestLoginReq{DeviceID: "device-a"})
 	if !login.IsSuccess(res2) {
 		t.Fatalf("expected resume success, got %#v", res2.Error)
 	}
@@ -88,11 +88,11 @@ func TestGuestLoginRejectsEmptyDeviceID(t *testing.T) {
 
 	svc := newTestLoginService(t, client)
 
-	res, _ := svc.GuestLogin(context.Background(), &apitypes.GuestLoginReq{})
+	res, _ := svc.GuestLogin(context.Background(), &entity.GuestLoginReq{})
 	if login.IsSuccess(res) {
 		t.Fatal("expected invalid request failure")
 	}
-	if res.Error.Code != apitypes.ErrorCodeInvalidRequest {
+	if res.Error.Code != entity.ErrorCodeInvalidRequest {
 		t.Fatalf("unexpected error code: %v", res.Error.Code)
 	}
 }
@@ -104,21 +104,21 @@ func TestPhoneAuthCreatesSessionAndRejectsInvalidCode(t *testing.T) {
 	svc := newTestLoginService(t, client)
 	ctx := context.Background()
 
-	bad, _ := svc.PhoneRegister(ctx, &apitypes.PhoneRegisterReq{Phone: "13800000000", VerifyCode: "999999"})
-	if bad.Error.Code != apitypes.ErrorCodeInvalidRequest {
+	bad, _ := svc.PhoneRegister(ctx, &entity.PhoneRegisterReq{Phone: "13800000000", VerifyCode: "999999"})
+	if bad.Error.Code != entity.ErrorCodeInvalidRequest {
 		t.Fatalf("expected invalid code rejection, got %v", bad.Error.Code)
 	}
 
-	res, auth := svc.PhoneRegister(ctx, &apitypes.PhoneRegisterReq{Phone: "13800000000", VerifyCode: "000000"})
-	if apitypes.HasError(res.Error) {
+	res, auth := svc.PhoneRegister(ctx, &entity.PhoneRegisterReq{Phone: "13800000000", VerifyCode: "000000"})
+	if entity.HasError(res.Error) {
 		t.Fatalf("expected phone register success, got %#v", res.Error)
 	}
 	if res.PlayerID == 0 || res.SessionToken == "" || auth == nil || auth.SessionToken == "" {
 		t.Fatal("expected player id and session token")
 	}
 
-	loginRes, loginAuth := svc.PhoneLogin(ctx, &apitypes.PhoneLoginReq{Phone: "13800000000", VerifyCode: "123456"})
-	if apitypes.HasError(loginRes.Error) {
+	loginRes, loginAuth := svc.PhoneLogin(ctx, &entity.PhoneLoginReq{Phone: "13800000000", VerifyCode: "123456"})
+	if entity.HasError(loginRes.Error) {
 		t.Fatalf("expected phone login success, got %#v", loginRes.Error)
 	}
 	if loginRes.PlayerID != res.PlayerID {
