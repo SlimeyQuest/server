@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/slimeyquest/server/ent"
-	"github.com/slimeyquest/server/ent/player"
+	"github.com/slimeyquest/ent"
+	"github.com/slimeyquest/ent/player"
 	"github.com/slimeyquest/server/internal/gameplayconfig"
 )
 

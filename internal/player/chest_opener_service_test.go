@@ -9,7 +9,7 @@ import (
 
 	commonv1 "github.com/slimeyquest/proto/gen/go/common"
 	equipmentv1 "github.com/slimeyquest/proto/gen/go/equipment"
-	"github.com/slimeyquest/server/ent/enttest"
+	"github.com/slimeyquest/ent/enttest"
 	"github.com/slimeyquest/server/internal/gameplayconfig"
 	"github.com/slimeyquest/server/internal/player"
 )

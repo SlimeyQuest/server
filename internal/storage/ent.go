@@ -10,7 +10,7 @@ import (
 	entsql "entgo.io/ent/dialect/sql"
 	_ "github.com/jackc/pgx/v5/stdlib"
 
-	"github.com/slimeyquest/server/ent"
+	"github.com/slimeyquest/ent"
 )
 
 // Ent wraps the ent client and schema lifecycle.

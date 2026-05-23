@@ -9,7 +9,7 @@ import (
 	"entgo.io/ent/dialect"
 	_ "github.com/mattn/go-sqlite3"
 
-	"github.com/slimeyquest/server/ent/enttest"
+	"github.com/slimeyquest/ent/enttest"
 	"github.com/slimeyquest/server/internal/gameplayconfig"
 	"github.com/slimeyquest/server/internal/player"
 	"github.com/slimeyquest/server/internal/reward"

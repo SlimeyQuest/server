@@ -11,8 +11,8 @@ import (
 
 	commonv1 "github.com/slimeyquest/proto/gen/go/common"
 	loginv1 "github.com/slimeyquest/proto/gen/go/login"
-	"github.com/slimeyquest/server/ent"
-	"github.com/slimeyquest/server/ent/enttest"
+	"github.com/slimeyquest/ent"
+	"github.com/slimeyquest/ent/enttest"
 	"github.com/slimeyquest/server/internal/gameplayconfig"
 	"github.com/slimeyquest/server/internal/idle"
 	"github.com/slimeyquest/server/internal/login"

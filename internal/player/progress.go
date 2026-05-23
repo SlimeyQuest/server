@@ -3,7 +3,7 @@ package player
 import (
 	"time"
 
-	"github.com/slimeyquest/server/ent"
+	"github.com/slimeyquest/ent"
 )
 
 // ProgressState is the server-side gameplay snapshot for one player.
