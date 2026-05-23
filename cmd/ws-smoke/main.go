@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	readTimeout       = 10 * time.Second
-	stage1ClearGold   = int64(50)
+	readTimeout     = 10 * time.Second
+	stage1ClearGold = int64(50)
 )
 
 type savedState struct {

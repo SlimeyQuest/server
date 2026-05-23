@@ -10,15 +10,16 @@ import (
 	"sync"
 
 	"github.com/slimeyquest/server/internal/config"
+	"github.com/slimeyquest/server/internal/data/playerrepo"
+	"github.com/slimeyquest/server/internal/data/storage"
 	"github.com/slimeyquest/server/internal/gameplayconfig"
-	"github.com/slimeyquest/server/internal/idle"
-	"github.com/slimeyquest/server/internal/login"
-	"github.com/slimeyquest/server/internal/network"
-	"github.com/slimeyquest/server/internal/player"
-	"github.com/slimeyquest/server/internal/reward"
-	"github.com/slimeyquest/server/internal/session"
-	"github.com/slimeyquest/server/internal/stage"
-	"github.com/slimeyquest/server/internal/storage"
+	"github.com/slimeyquest/server/internal/interfaces/network"
+	"github.com/slimeyquest/server/internal/services/idle"
+	"github.com/slimeyquest/server/internal/services/login"
+	"github.com/slimeyquest/server/internal/services/player"
+	"github.com/slimeyquest/server/internal/services/reward"
+	"github.com/slimeyquest/server/internal/services/session"
+	"github.com/slimeyquest/server/internal/services/stage"
 )
 
 // App wires infrastructure and runs the server lifecycle.
@@ -62,7 +63,7 @@ func New(ctx context.Context, cfg *config.Config, log *slog.Logger) (*App, error
 		return nil, fmt.Errorf("load gameplay config: %w", err)
 	}
 
-	playerRepo := player.NewRepository(entClient.Client(), gameplayCfg)
+	playerRepo := playerrepo.New(entClient.Client(), gameplayCfg)
 	sessionMgr := session.NewManager()
 	rewardSvc := reward.NewService(log.With("component", "reward"), gameplayCfg, playerRepo)
 	idleSvc := idle.NewService(log.With("component", "idle"), gameplayCfg, playerRepo, rewardSvc)

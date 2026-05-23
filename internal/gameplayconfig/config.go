@@ -30,34 +30,34 @@ type Config struct {
 
 // Globals are idle and combat tuning parameters.
 type Globals struct {
-	OfflineCapHours      float64 `json:"offline_cap_hours"`
-	BaseOfflineRate      float64 `json:"base_offline_rate"`
-	EquipRollIntervalSec int64   `json:"equip_roll_interval_sec"`
-	MaxEquipRollsPerClaim int64  `json:"max_equip_rolls_per_claim"`
-	OnlineMultiplier     float64 `json:"online_multiplier"`
-	ClearThreshold       float64 `json:"clear_threshold"`
-	KArmor               float64 `json:"k_armor"`
-	IdleScalePerStage    float64 `json:"idle_scale_per_stage"`
+	OfflineCapHours       float64 `json:"offline_cap_hours"`
+	BaseOfflineRate       float64 `json:"base_offline_rate"`
+	EquipRollIntervalSec  int64   `json:"equip_roll_interval_sec"`
+	MaxEquipRollsPerClaim int64   `json:"max_equip_rolls_per_claim"`
+	OnlineMultiplier      float64 `json:"online_multiplier"`
+	ClearThreshold        float64 `json:"clear_threshold"`
+	KArmor                float64 `json:"k_armor"`
+	IdleScalePerStage     float64 `json:"idle_scale_per_stage"`
 }
 
 // ClosedLoopConfig contains fixed values for boxes, opener upgrades and MVP draws.
 type ClosedLoopConfig struct {
-	StageBoxMin                int32 `yaml:"-"`
-	StageBoxMax                int32 `yaml:"-"`
-	OpenerUpgradeBaseGold      int64 `yaml:"-"`
-	OpenerUpgradeGrowthPct     int32 `yaml:"-"`
-	OpenerMaxLevel             int32 `yaml:"-"`
-	EquipmentAttackPerLevel    int64 `yaml:"-"`
-	EquipmentHPPerLevel        int64 `yaml:"-"`
-	RarityBoostEveryLevels     int32 `yaml:"-"`
+	StageBoxMin                int32   `yaml:"-"`
+	StageBoxMax                int32   `yaml:"-"`
+	OpenerUpgradeBaseGold      int64   `yaml:"-"`
+	OpenerUpgradeGrowthPct     int32   `yaml:"-"`
+	OpenerMaxLevel             int32   `yaml:"-"`
+	EquipmentAttackPerLevel    int64   `yaml:"-"`
+	EquipmentHPPerLevel        int64   `yaml:"-"`
+	RarityBoostEveryLevels     int32   `yaml:"-"`
 	ChestRarityWeights         []int32 `yaml:"-"`
 	ChestRarityUnlockLevels    []int32 `yaml:"-"`
 	ShopRarityWeights          []int32 `yaml:"-"`
 	ShopRarityUnlockLevels     []int32 `yaml:"-"`
-	DecomposeBaseGold          int64 `yaml:"-"`
-	DecomposeLevelGold         int64 `yaml:"-"`
-	SkillShopDrawsPerLevel     int32 `yaml:"-"`
-	CompanionShopDrawsPerLevel int32 `yaml:"-"`
+	DecomposeBaseGold          int64   `yaml:"-"`
+	DecomposeLevelGold         int64   `yaml:"-"`
+	SkillShopDrawsPerLevel     int32   `yaml:"-"`
+	CompanionShopDrawsPerLevel int32   `yaml:"-"`
 
 	Stage   ClosedLoopStageConfig   `yaml:"stage"`
 	Chest   ClosedLoopChestConfig   `yaml:"chest"`
@@ -66,75 +66,75 @@ type ClosedLoopConfig struct {
 }
 
 type ClosedLoopStageConfig struct {
-	BoxMin          int32 `yaml:"box_min"`
-	BoxMax          int32 `yaml:"box_max"`
-	OpenerBaseGold  int64 `yaml:"opener_base_gold"`
-	OpenerGrowthPct int32 `yaml:"opener_growth_pct"`
-	MaxLevel        int32 `yaml:"max_level"`
-	AttackPerLevel  int64 `yaml:"attack_per_level"`
-	HPPerLevel      int64 `yaml:"hp_per_level"`
+	BoxMin           int32 `yaml:"box_min"`
+	BoxMax           int32 `yaml:"box_max"`
+	OpenerBaseGold   int64 `yaml:"opener_base_gold"`
+	OpenerGrowthPct  int32 `yaml:"opener_growth_pct"`
+	MaxLevel         int32 `yaml:"max_level"`
+	AttackPerLevel   int64 `yaml:"attack_per_level"`
+	HPPerLevel       int64 `yaml:"hp_per_level"`
 	RarityBoostEvery int32 `yaml:"rarity_boost_every"`
 }
 
 type ClosedLoopChestConfig struct {
-	Rarities         []int32 `yaml:"rarities"`
-	InitialRarities  int32   `yaml:"initial_rarities"`
-	MaxActiveRarities int32  `yaml:"max_active_rarities"`
-	UnlockInterval   int32   `yaml:"unlock_interval"`
-	LowestBaseWeight int32   `yaml:"lowest_base_weight"`
-	AdjacentGapPct   int32   `yaml:"adjacent_gap_pct"`
-	ProgressShiftPct int32   `yaml:"progress_shift_pct"`
-	TopWeightCapPct  int32   `yaml:"top_weight_cap_pct"`
+	Rarities          []int32 `yaml:"rarities"`
+	InitialRarities   int32   `yaml:"initial_rarities"`
+	MaxActiveRarities int32   `yaml:"max_active_rarities"`
+	UnlockInterval    int32   `yaml:"unlock_interval"`
+	LowestBaseWeight  int32   `yaml:"lowest_base_weight"`
+	AdjacentGapPct    int32   `yaml:"adjacent_gap_pct"`
+	ProgressShiftPct  int32   `yaml:"progress_shift_pct"`
+	TopWeightCapPct   int32   `yaml:"top_weight_cap_pct"`
 }
 
 type ClosedLoopShopConfig struct {
-	Rarities         []int32 `yaml:"rarities"`
-	InitialRarities  int32   `yaml:"initial_rarities"`
-	MaxActiveRarities int32  `yaml:"max_active_rarities"`
-	UnlockInterval   int32   `yaml:"unlock_interval"`
-	LowestBaseWeight int32   `yaml:"lowest_base_weight"`
-	AdjacentGapPct   int32   `yaml:"adjacent_gap_pct"`
-	ProgressShiftPct int32   `yaml:"progress_shift_pct"`
-	TopWeightCapPct  int32   `yaml:"top_weight_cap_pct"`
+	Rarities          []int32 `yaml:"rarities"`
+	InitialRarities   int32   `yaml:"initial_rarities"`
+	MaxActiveRarities int32   `yaml:"max_active_rarities"`
+	UnlockInterval    int32   `yaml:"unlock_interval"`
+	LowestBaseWeight  int32   `yaml:"lowest_base_weight"`
+	AdjacentGapPct    int32   `yaml:"adjacent_gap_pct"`
+	ProgressShiftPct  int32   `yaml:"progress_shift_pct"`
+	TopWeightCapPct   int32   `yaml:"top_weight_cap_pct"`
 }
 
 type ClosedLoopEconomyConfig struct {
 	DecomposeBaseGold      int64 `yaml:"decompose_base_gold"`
 	DecomposeLevelGold     int64 `yaml:"decompose_level_gold"`
 	SkillDrawsPerLevel     int32 `yaml:"skill_draws_per_level"`
-	CompanionDrawsPerLevel  int32 `yaml:"companion_draws_per_level"`
+	CompanionDrawsPerLevel int32 `yaml:"companion_draws_per_level"`
 }
 
-func (c ClosedLoopConfig) StageBoxMinValue() int32 { return c.StageBoxMin }
-func (c ClosedLoopConfig) StageBoxMaxValue() int32 { return c.StageBoxMax }
-func (c ClosedLoopConfig) OpenerUpgradeBaseGoldValue() int64 { return c.OpenerUpgradeBaseGold }
-func (c ClosedLoopConfig) OpenerUpgradeGrowthPctValue() int32 { return c.OpenerUpgradeGrowthPct }
-func (c ClosedLoopConfig) OpenerMaxLevelValue() int32 { return c.OpenerMaxLevel }
+func (c ClosedLoopConfig) StageBoxMinValue() int32             { return c.StageBoxMin }
+func (c ClosedLoopConfig) StageBoxMaxValue() int32             { return c.StageBoxMax }
+func (c ClosedLoopConfig) OpenerUpgradeBaseGoldValue() int64   { return c.OpenerUpgradeBaseGold }
+func (c ClosedLoopConfig) OpenerUpgradeGrowthPctValue() int32  { return c.OpenerUpgradeGrowthPct }
+func (c ClosedLoopConfig) OpenerMaxLevelValue() int32          { return c.OpenerMaxLevel }
 func (c ClosedLoopConfig) EquipmentAttackPerLevelValue() int64 { return c.EquipmentAttackPerLevel }
-func (c ClosedLoopConfig) EquipmentHPPerLevelValue() int64 { return c.EquipmentHPPerLevel }
-func (c ClosedLoopConfig) RarityBoostEveryLevelsValue() int32 { return c.RarityBoostEveryLevels }
+func (c ClosedLoopConfig) EquipmentHPPerLevelValue() int64     { return c.EquipmentHPPerLevel }
+func (c ClosedLoopConfig) RarityBoostEveryLevelsValue() int32  { return c.RarityBoostEveryLevels }
 
 // StageRow is one flat stage definition.
 type StageRow struct {
-	FlatStage         int32
-	AdventureID       int32
-	StageIndex        int32
-	RecommendedPower  int64
-	FirstClearGold    int64
-	IsBoss            bool
-	BossPowerMult     float64
-	MilestoneGold     int64
+	FlatStage        int32
+	AdventureID      int32
+	StageIndex       int32
+	RecommendedPower int64
+	FirstClearGold   int64
+	IsBoss           bool
+	BossPowerMult    float64
+	MilestoneGold    int64
 }
 
 // DropRow is one weighted equipment drop entry.
 type DropRow struct {
-	ConfigID        int32
-	Rarity          int32
-	Weight          int
-	Slot            int32
-	Attack          int64
-	HP              int64
-	BonusAttackPct  int32
+	ConfigID       int32
+	Rarity         int32
+	Weight         int
+	Slot           int32
+	Attack         int64
+	HP             int64
+	BonusAttackPct int32
 }
 
 // Load parses embedded gameplay config files.
@@ -192,17 +192,17 @@ func loadClosedLoop() (ClosedLoopConfig, error) {
 	var file struct {
 		ClosedLoop struct {
 			Stage struct {
-				BoxMin          int32   `yaml:"box_min"`
-				BoxMax          int32   `yaml:"box_max"`
-				OpenerBaseGold  int64   `yaml:"opener_base_gold"`
-				OpenerGrowthPct int32   `yaml:"opener_growth_pct"`
-				MaxLevel        int32   `yaml:"max_level"`
-				AttackPerLevel  int64   `yaml:"attack_per_level"`
-				HPPerLevel      int64   `yaml:"hp_per_level"`
-				RarityBoostEvery int32  `yaml:"rarity_boost_every"`
+				BoxMin           int32 `yaml:"box_min"`
+				BoxMax           int32 `yaml:"box_max"`
+				OpenerBaseGold   int64 `yaml:"opener_base_gold"`
+				OpenerGrowthPct  int32 `yaml:"opener_growth_pct"`
+				MaxLevel         int32 `yaml:"max_level"`
+				AttackPerLevel   int64 `yaml:"attack_per_level"`
+				HPPerLevel       int64 `yaml:"hp_per_level"`
+				RarityBoostEvery int32 `yaml:"rarity_boost_every"`
 			} `yaml:"stage"`
-			Chest ClosedLoopChestConfig `yaml:"chest"`
-			Shop ClosedLoopShopConfig `yaml:"shop"`
+			Chest   ClosedLoopChestConfig `yaml:"chest"`
+			Shop    ClosedLoopShopConfig  `yaml:"shop"`
 			Economy struct {
 				DecomposeBaseGold      int64 `yaml:"decompose_base_gold"`
 				DecomposeLevelGold     int64 `yaml:"decompose_level_gold"`

@@ -1,13 +1,12 @@
 # SlimeyQuest Server
 
-Lightweight modular monolith backend for SlimeyQuest (WebSocket + PostgreSQL + Redis).
+Lightweight layered modular monolith backend for SlimeyQuest (HTTP migration in progress + PostgreSQL + Redis).
 
 ## Prerequisites
 
 - Go 1.26+
 - PostgreSQL (default database: `slimeyquest`)
 - Redis
-- [buf](https://buf.build/docs/installation) (optional, for protobuf codegen)
 
 ## Local development
 
@@ -44,44 +43,38 @@ Lightweight modular monolith backend for SlimeyQuest (WebSocket + PostgreSQL + R
    {"status":"ok","version":"dev","uptime":"1m2s"}
    ```
 
-   WebSocket endpoint: `ws://localhost:8080/ws`
+   HTTP API documentation starts at [`docs/api/README.md`](docs/api/README.md).
+
+   Legacy WebSocket endpoint during migration: `ws://localhost:8080/ws`
 
 ## Project layout
 
+The server uses a layered modular-monolith layout. Interface, business, and data-access code are stored separately to keep transport concerns out of domain logic and persistence concerns out of interface handlers.
+
 ```
-cmd/server/                 Entry point
-internal/app/               Application wiring and lifecycle
-internal/config/            Environment configuration
-internal/logger/            Structured logging (slog)
-internal/network/           HTTP, WebSocket hub, connection lifecycle
-internal/network/protocol/  Protobuf wire boundary (future framing/routing)
-internal/storage/           PostgreSQL and Redis clients
-pkg/                        Reserved for future shared public packages (empty)
-```
-
-## Protobuf
-
-Definitions live in the sibling `../proto` repository. Generated Go packages import as:
-
-```go
-import gatewayv1 "github.com/slimeyquest/proto/gen/go/gateway"
-```
-
-`go.mod` depends on the released `github.com/slimeyquest/proto` module. Do not commit a local `replace` for proto in this repository; use a Go workspace locally if you need to develop server and proto side by side.
-
-For private module downloads in CI, configure `GOPRIVATE=github.com/slimeyquest/*` and provide a GitHub token with read access to the proto repository.
-
-Regenerate after proto changes in the proto repository:
-
-```bash
-make proto-gen    # delegates to ../proto Makefile (Go + TS)
-go build ./...
+cmd/server/                         Entry point
+internal/app/                       Application wiring and lifecycle
+internal/config/                    Environment configuration
+internal/logger/                    Structured logging (slog)
+internal/interfaces/network/        Interface layer: legacy WebSocket transport, request routing, connection lifecycle
+internal/interfaces/network/protocol/ Legacy protobuf wire boundary while HTTP migration is in progress
+internal/services/login/            Business layer: account authentication and transport-agnostic login session flow
+internal/services/player/           Business layer: player domain model, progression, equipment, chest logic, repository interface
+internal/services/idle/             Business layer: idle reward calculation and claim flow
+internal/services/reward/           Business layer: reward application and reward result types
+internal/services/stage/            Business layer: stage progression and stage rewards
+internal/services/session/          Business layer: in-memory session ownership and validation
+internal/data/playerrepo/           Data layer: ent-backed player repository implementation
+internal/data/storage/              Data layer: PostgreSQL, Redis, and ent client lifecycle
+docs/api/                           HTTP API documentation
 ```
 
-Full client sync: `../tools/scripts/sync-proto.sh`.
+## API direction
 
-See [internal/network/protocol/doc.go](internal/network/protocol/doc.go) for the wire-layer boundary.
+The project is migrating away from protobuf-based client/server integration. New functionality should be exposed through HTTP JSON endpoints documented in [`docs/api/README.md`](docs/api/README.md).
 
-## Deferred
+The legacy WebSocket/protobuf adapter remains under `internal/interfaces/network` only for compatibility during migration. Keep new business logic in `internal/services` and call it from interface adapters instead of mixing transport code into services.
 
-- **ent ORM** — introduced later with player schema, login persistence, and gameplay data modeling (not part of the infrastructure foundation).
+## ent dependency
+
+The ent schema and generated ORM code live in the separate `github.com/slimeyquest/ent` module. The server consumes the released module version instead of storing generated ent code directly.
